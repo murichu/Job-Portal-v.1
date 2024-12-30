@@ -1,7 +1,7 @@
 import React from 'react';
 import { assets } from '../assets/assets';
 import { useClerk, UserButton, useUser } from '@clerk/clerk-react';
-import { Link } from 'react-router-dom'; // Import Link component
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const { openSignIn } = useClerk();

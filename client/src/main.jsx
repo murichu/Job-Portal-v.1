@@ -1,9 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import './index.css'; 
 import App from './App.jsx'; 
-import { BrowserRouter } from 'react-router-dom'; 
+import { BrowserRouter } from 'react-router-dom';
 import { AppContextProvider } from './context/AppContext.jsx'; 
 import { ClerkProvider } from '@clerk/clerk-react'; 
+
 // Get your Clerk Publishable Key from the environment variable
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -14,6 +15,7 @@ if (!PUBLISHABLE_KEY) {
 
 // Render the application to the root element
 createRoot(document.getElementById('root')).render(
+  
   // Wrap the app with ClerkProvider for authentication and BrowserRouter for routing
   <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
     <BrowserRouter>
