@@ -10,6 +10,24 @@ const JobListings = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const [selectedLocations, setSelectedLocations] = useState([]);
+
+  const [filterJobs, setFilterJobs] = useState(jobs);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategories(
+      prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
+
+  }
+
+  const handleLocationChange = (location) => {
+    setSelectedCategories(
+      prev => prev.includes(location) ? prev.filter(c => c !== location) : [...prev, location]);
+
+  }
+
   return (
     <div className="container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-8">
 
@@ -63,8 +81,8 @@ const JobListings = () => {
               <li className="flex gap-3 items-center" key={index}>
                 <input
                   type="checkbox"
-                  name={category}
-                  id={`category-${category}-${index}`}
+                  onChange={() => handleCategoryChange(category)}
+                  checked={selectedCategories.includes(category)}
                   className="scale-125"
                 />
                 <label
@@ -86,8 +104,8 @@ const JobListings = () => {
               <li className="flex gap-3 items-center" key={index}>
                 <input
                   type="checkbox"
-                  name={location}
-                  id={`category-${location}-${index}`}
+                  onChange={() => handleLocationChange(location)}
+                  checked={selectedLocations.includes(location)}
                   className="scale-125"
                 />
                 <label
