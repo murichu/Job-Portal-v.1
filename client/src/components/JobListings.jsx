@@ -1,19 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { assets } from '../assets/assets';
+import { assets, JobCategories, JobLocations } from '../assets/assets';
+import JobCard from '../components/JobCard';
 
-const JobCategories = [
-    "Programming",
-    "Data Science",
-    "Designing",
-    "Networking",
-    "Management",
-    "Marketing",
-    "Cybersecurity"
-];
 
 const JobListings = () => {
-  const { isSearched, searchFilter, setSearchFilter } = useContext(AppContext);
+  const { isSearched, searchFilter, setSearchFilter, jobs } = useContext(AppContext);
+
+  const [ showFilter, setShowFilter ] = useState(false);
 
   return (
     <div className="container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-8">
@@ -52,21 +46,72 @@ const JobListings = () => {
           </>
         )}
 
+        <button onClick={ e => setShowFilter(prev => !prev) } className='px-6 py-1.5 rounded border border-gray-400 lg:hidden'>
+          {
+            showFilter 
+            ? "Close" 
+            : "Filters"
+          }
+        </button>
+
         {/* Category Filter */}
-        <div className="max-lg:hidden">
+        <div className={showFilter ? "" : "max-lg:hidden"}>
           <h4 className="font-medium text-lg py-4">Search by Categories</h4>
-          <ul className="space-y text-gray-600">
+          <ul className="space-y-3 text-gray-600">
             {JobCategories.map((category, index) => (
-              <li className="flex gap-3 items-center" key={category}>
-                <input 
-                  type="checkbox" name={category} id={`category-${index}`} className='sale-125'/>
-                 {category}
+              <li className="flex gap-3 items-center" key={index}>
+                <input
+                  type="checkbox"
+                  name={category}
+                  id={`category-${category}-${index}`}
+                  className="scale-125"
+                />
+                <label
+                  htmlFor={`category-${category}-${index}`}
+                  className="cursor-pointer"
+                >
+                  {category}
+                </label>
               </li>
             ))}
           </ul>
         </div>
 
+        {/* Location Filter */}
+        <div className={showFilter ? "" : "max-lg:hidden"}>
+          <h4 className="font-medium text-lg py-4 pt-10">Search by Location</h4>
+          <ul className="space-y-3 text-gray-600">
+            {JobLocations.map((location, index) => (
+              <li className="flex gap-3 items-center sm:grid-cols-2" key={index}>
+                <input
+                  type="checkbox"
+                  name={location}
+                  id={`category-${location}-${index}`}
+                  className="scale-125"
+                />
+                <label
+                  htmlFor={`category-${location}-${index}`}
+                  className="cursor-pointer"
+                >
+                  {location}
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
+
+      {/* Job Listings */}
+      <section className="w-full lg:w-3/4 text-gray-800 max-lg:px-4">
+        <h3 className="font-medium text-3xl py-2" id="job-list">Latest Jobs</h3>
+        <p className="mb-8">Get your desired job from top companies</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {jobs.map((job, index) => (
+            <JobCard key={index} job={job} />
+          ))}
+        </div>
+      </section>
+
     </div>
   );
 }
