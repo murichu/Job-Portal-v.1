@@ -23,8 +23,8 @@ const JobCard = ({ job }) => {
 
       {/* Apply and Learn More Buttons */}
       <div className='mt-4 flex gap-4 text-sm'>
-        <button className='bg-blue-600 text-white px-4 py-2 rounded'>Apply Now</button>
-        <button className='text-gray-500 border border-gray-500 rounded px-4 py-2'>Learn More</button>
+        <button className='bg-gray-400 hover:bg-blue-500 text-white px-4 py-2 rounded'>Apply Now</button>
+        <button className='text-gray-500 border border-gray-500 hover:bg-gray-100 rounded px-4 py-2'>Learn More</button>
       </div>
     </div>
   );
