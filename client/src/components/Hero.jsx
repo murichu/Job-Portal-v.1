@@ -19,6 +19,10 @@ const Hero = () => {
       title: titleRef.current.value,
       location: locationRef.current.value
     });
+
+    // Clear the input fields after search
+    //titleRef.current.value = '';
+    //locationRef.current.value = '';
     
   }
 
