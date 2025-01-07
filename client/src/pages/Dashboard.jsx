@@ -1,13 +1,14 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import Footer from "../components/Footer";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
     // Handle logout logic here, like clearing session storage or tokens
-    navigate("/login"); // Redirect to login page
+    navigate("/login"); 
   };
 
   return (
@@ -85,6 +86,7 @@ const Dashboard = () => {
 
         <Outlet />
       </div>
+      <Footer /> 
     </div>
   );
 };
