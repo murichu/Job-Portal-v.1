@@ -101,7 +101,7 @@ const AddJob = () => {
         />
       </div>
 
-      <button className="w-28 py-3 mt-4 bg-blue-600 text-white rounded">Add</button>
+      <button className="px-4 py-2 mt-4 bg-blue-600 text-white rounded">Add</button>
     </form>
   );
 };
