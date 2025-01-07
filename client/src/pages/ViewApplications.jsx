@@ -3,10 +3,10 @@ import { assets, viewApplicationsPageData } from '../assets/assets'
 
 const ViewApplications = () => {
   return (
-    <div className="container mx-auto p-4">
+    <div className="container p-4 sm:px-6 lg:px-8 border border-gray-200 ml-2 mt-2 rounded-lg">
       <div>
-        <table className="w-full max-w-7xl bg-white border border-gray-200 max-sm:text-sm">
-          <thead className="bg-gray-100">
+        <table className="w-full max-w-7xl bg-white max-sm:text-sm">
+          <thead className="bg-gray-100 text-left text-sm font-semibold text-gray-700">
             <tr className='border-b'>
               <th className="px-4 py-2 text-left">#</th>
               <th className="px-4 py-2 text-left">User Name</th>
@@ -16,7 +16,7 @@ const ViewApplications = () => {
               <th className="px-4 py-2 text-left">Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-sm text-gray-600">
             {viewApplicationsPageData.map((applicant, index) => (
               <tr key={index} className="text-gray-700 hover:bg-gray-200">
                 <td className="px-4 py-2 border-b text-center">{index+1}</td>

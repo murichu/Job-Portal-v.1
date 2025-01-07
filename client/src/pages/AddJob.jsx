@@ -22,7 +22,7 @@ const AddJob = () => {
   }, []);
 
   return (
-    <form className="container p-4 flex flex-col w-full items-start gap-3">
+    <form className="container border border-gray-200 p-4 flex flex-col rounded mx-auto items-start gap-3 mt-3 ml-4 w-90">
       <div className="w-full">
         <p className="mb-2">Job Title</p>
         <input
