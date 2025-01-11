@@ -1,13 +1,13 @@
 import svix from 'svix'; // Default import of the svix module
-import prisma from "../config/prisma.js";
+import User from '../models/UserModel.js'; 
 
 const { webhook } = svix; // Destructure 'webhook' from the default export
 
 // API Controller function to manage Clerk User with Database
 export const clerkWebhooks = async (req, res) => {
     try {
-        // Create a Svix instance with clerk webhook secret
-        const whook = new webhook(process.env.CLERK_WEBHOOK_SECRET);  // Corrected instantiation
+        // Create a Svix instance with Clerk webhook secret
+        const whook = new webhook(process.env.CLERK_WEBHOOK_SECRET);
 
         // Verifying Headers
         await whook.verify(JSON.stringify(req.body), {
@@ -23,16 +23,22 @@ export const clerkWebhooks = async (req, res) => {
         switch (type) {
             case 'user.created': {
                 const userData = {
-                    id: data.id,  // `id` is the Prisma field, not `_id`
+                    _id: data.id,  // `id` comes from Clerk, but it's treated as _id in MongoDB
                     email: data.email_address[0].email_address,
                     name: data.first_name + " " + data.last_name,
                     image: data.image_url,
                     resume: '',  // Empty resume
                 };
 
-                await prisma.user.create({ data: userData });  // Corrected to use Prisma
+                // Use Mongoose to create the user in the database
+             
+                await User.create(userData);
 
-                res.json({ success: true });
+                // Respond back to indicate success
+                res.json({ success: true, message: "User Created using Clerk", User});
+
+                // Optional: Log the user data
+                console.log("User created:", User);
                 break;
             }
 
@@ -43,21 +49,20 @@ export const clerkWebhooks = async (req, res) => {
                     image: data.image_url,
                 };
 
-                await prisma.user.update({
-                    where: { id: data.id },
-                    data: userData,
-                });
+                // Use Mongoose to update the user in the database
+                await User.findByIdAndUpdate(data.id, userData);
 
-                res.json({ success: true });
+                // Respond back to indicate success
+                res.json({ success: true, Message: "User Created Succesfully", User});
                 break;
             }
 
             case 'user.deleted': {
-                await prisma.user.delete({
-                    where: { id: data.id },
-                });
+                // Use Mongoose to delete the user from the database
+                await User.findByIdAndDelete(data.id);
 
-                res.json({ success: true });
+                // Respond back to indicate success
+                res.json({ success: true, message: "User Deleted"});
                 break;
             }
 
@@ -67,7 +72,7 @@ export const clerkWebhooks = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: "Webhook error" });
+        console.log("Error occurred:", error); // Log the error object
+        res.json({ success: false, message: "Webhook error", error: error.message });
     }
 };

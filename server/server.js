@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import prisma from './config/prisma.js';
 import * as Sentry from "@sentry/node";
 import { clerkWebhooks } from './controllers/webhooks.js';
+import connectDB from "./config/mongoDB.js";
 
 
 // Initialize dotenv to load environment variables
@@ -12,6 +13,9 @@ dotenv.config();
 
 // Initialize express
 const app = express();
+
+// Database Connection
+connectDB();
 
 // Middlewares
 app.use(cors());

@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")  // This will pull the DATABASE_URL from your .env file
+  url      = env("DATABASE_URL")  // Prisma will use the DATABASE_URL from the .env file
 }
 
 model User {
@@ -22,3 +22,4 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
