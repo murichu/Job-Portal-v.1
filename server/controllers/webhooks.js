@@ -1,5 +1,6 @@
 import svix from 'svix'; // Default import of the svix module
-import User from '../models/UserModel.js'; 
+import User from '../models/User.js';
+
 
 const { webhook } = svix; // Destructure 'webhook' from the default export
 
@@ -31,9 +32,9 @@ export const clerkWebhooks = async (req, res) => {
                 };
 
                 // Use Mongoose to create the user in the database
-             
+                
                 await User.create(userData);
-
+                
                 // Respond back to indicate success
                 res.json({ success: true, message: "User Created using Clerk", User});
 
@@ -67,7 +68,7 @@ export const clerkWebhooks = async (req, res) => {
             }
 
             default:
-                res.json({ success: false, message: "Unknown event type" });
+        
                 break;
         }
 

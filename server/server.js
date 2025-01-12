@@ -2,10 +2,11 @@ import './config/instrument.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import prisma from './config/prisma.js';
 import * as Sentry from "@sentry/node";
-import { clerkWebhooks } from './controllers/webhooks.js';
 import connectDB from "./config/mongoDB.js";
+import cookieParser from 'cookie-parser';
+import { clerkWebhooks } from './controllers/webhooks.js';
+import userRouter from './routes/userRouter.js'
 
 
 // Initialize dotenv to load environment variables
@@ -18,13 +19,18 @@ const app = express();
 connectDB();
 
 // Middlewares
-app.use(cors());
+app.use(cors({credentials: true}));
 app.use(express.json());
+app.use(cookieParser());
+
 
 // Routes
 app.get('/', (req, res) => {
   res.send('API is working!');
 });
+
+// API Endpoints
+app.use('/api/user', userRouter)
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
