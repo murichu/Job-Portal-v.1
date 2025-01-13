@@ -5,8 +5,7 @@ import dotenv from 'dotenv';
 import * as Sentry from "@sentry/node";
 import connectDB from "./config/mongoDB.js";
 import cookieParser from 'cookie-parser';
-import { clerkWebhooks } from './controllers/webhooks.js';
-import userRouter from './routes/userRouter.js'
+import userRouter from './routes/userRouter.js';
 
 
 // Initialize dotenv to load environment variables
@@ -19,7 +18,7 @@ const app = express();
 connectDB();
 
 // Middlewares
-app.use(cors({credentials: true}));
+app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -30,13 +29,11 @@ app.get('/', (req, res) => {
 });
 
 // API Endpoints
-app.use('/api/user', userRouter)
+app.use('/api/user', userRouter);
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
 });
-
-app.post('/webhook', clerkWebhooks);
 
 
 // Port
