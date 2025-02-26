@@ -1,12 +1,12 @@
-import './config/instrument.js';
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import "./config/instrument.js";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 import * as Sentry from "@sentry/node";
 import connectDB from "./config/mongoDB.js";
-import cookieParser from 'cookie-parser';
-import userRouter from './routes/userRouter.js';
-
+import cookieParser from "cookie-parser";
+import userRouter from "./routes/userRouter.js";
+import { clerkWebhooks } from "./controllers/webhooks.js";
 
 // Initialize dotenv to load environment variables
 dotenv.config();
@@ -22,19 +22,19 @@ app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-
 // Routes
-app.get('/', (req, res) => {
-  res.send('API is working!');
+app.get("/", (req, res) => {
+  res.send("API is working!");
 });
 
 // API Endpoints
-app.use('/api/user', userRouter);
+app.use("/api/user", userRouter);
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
 });
 
+app.post("/webhooks", clerkWebhooks);
 
 // Port
 const PORT = process.env.PORT || 5000;
