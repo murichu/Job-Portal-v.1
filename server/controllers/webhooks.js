@@ -1,4 +1,5 @@
-import { webhook} from "svix"; // Import the default export of svix
+import pkg from "svix";
+const { webhook } = pkg;
 
 import User from "../models/User.js";
 import dotenv from "dotenv";
