@@ -5,8 +5,12 @@ import dotenv from "dotenv";
 import * as Sentry from "@sentry/node";
 import connectDB from "./config/mongoDB.js";
 import cookieParser from "cookie-parser";
-import userRouter from "./routes/userRouter.js";
 import { clerkWebhooks } from "./controllers/webhooks.js";
+import companyRouter from "./routes/companyRoutes.js";
+import connectCloudinary from "./config/Cloudinary.js";
+import jobRouter from "./routes/jobRoutes.js";
+import userRouter from "./routes/userRouter.js";
+
 //import { clerkMiddleware } from '@clerk/express'
 //import { serve } from "inngest/express";
 //import { inngest, functions } from "./inngest/index.js"
@@ -18,7 +22,9 @@ dotenv.config();
 const app = express();
 
 // Connect to database
-connectDB();
+await connectDB();
+
+await connectCloudinary();
 
 // General middleware
 app.use(
@@ -27,7 +33,6 @@ app.use(
     credentials: true,
   })
 );
-app.use("/webhooks", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(cookieParser());
 // app.use(clerkMiddleware());
@@ -42,6 +47,8 @@ app.post("/webhooks", clerkWebhooks);
 
 // User API routes
 app.use("/api/user", userRouter);
+app.use("/api/company", companyRouter);
+app.use("/api/jobs", jobRouter);
 
 // Inngest (optional)
 // app.use("/api/inngest", serve({ client: inngest, functions }));
