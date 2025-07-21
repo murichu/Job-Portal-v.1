@@ -1,7 +1,9 @@
-import pkg from "svix"; // Import the default export of svix
-const { webhook } = pkg; // Destructure webhook from the imported module
+import { webhook} from "svix"; // Import the default export of svix
 
 import User from "../models/User.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // API Controller Function to manage Clerk User with Database
 export const clerkWebhooks = async (req, res) => {
