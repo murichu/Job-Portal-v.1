@@ -11,44 +11,56 @@ import { clerkWebhooks } from "./controllers/webhooks.js";
 //import { serve } from "inngest/express";
 //import { inngest, functions } from "./inngest/index.js"
 
-// Initialize dotenv to load environment variables
+// Load environment variables
 dotenv.config();
 
 // Initialize express
 const app = express();
 
-// Database Connection
+// Connect to database
 connectDB();
 
-// Middlewares
-app.use(cors({ credentials: true }));
+// General middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL, // adjust to your frontend URL
+    credentials: true,
+  })
+);
+app.use("/webhooks", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(cookieParser());
-//app.use(clerkMiddleware())
+// app.use(clerkMiddleware());
 
-// Routes
+// Basic route
 app.get("/", (req, res) => {
   res.send("API is working!");
 });
 
-// Set up the "/api/inngest" (recommended) routes with the serve handler
-//app.use("/api/inngest", serve({ client: inngest, functions }));
-
+// Webhook endpoint
 app.post("/webhooks", clerkWebhooks);
 
-// API Endpoints
+// User API routes
 app.use("/api/user", userRouter);
 
-app.get("/debug-sentry", function mainHandler(req, res) {
+// Inngest (optional)
+// app.use("/api/inngest", serve({ client: inngest, functions }));
+
+// Debug route for Sentry
+app.get("/debug-sentry", (req, res) => {
   throw new Error("My first Sentry error!");
 });
 
-// Port
-const PORT = process.env.PORT || 5000;
+// 404 route handler
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
+// Sentry error handler (must come after all routes and middleware)
 Sentry.setupExpressErrorHandler(app);
 
 // Start the server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

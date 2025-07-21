@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(`${process.env.DATABASE_URL}/Job`);
+    await mongoose.connect(`${process.env.DATABASE_URL}/Job-portal`);
 
     console.log("Connected to MongoDB database");
 
