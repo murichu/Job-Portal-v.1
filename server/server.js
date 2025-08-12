@@ -29,7 +29,8 @@ await connectCloudinary();
 // General middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL, // adjust to your frontend URL
+    //origin: process.env.CLIENT_URL, // adjust to your frontend URL
+    origin: "https://jfj697-5173.csb.app",
     credentials: true,
   })
 );

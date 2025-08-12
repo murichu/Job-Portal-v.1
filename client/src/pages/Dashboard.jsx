@@ -1,14 +1,19 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Footer from "../components/Footer";
+import { AppContext } from "../context/AppContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { companyData, setShowRecruiterLogin, setCompanyData } =
+    useContext(AppContext);
 
   const handleLogout = () => {
-    // Handle logout logic here, like clearing session storage or tokens
-    navigate("/login"); 
+    localStorage.removeItem("companyToken");
+    // If you store company data in context, clear it too
+    setCompanyData(null);
+    setShowRecruiterLogin(true);
   };
 
   return (
@@ -22,28 +27,34 @@ const Dashboard = () => {
             src={assets.logo}
             alt="Logo"
           />
-          <div className="flex items-center gap-3">
-            <p className="max-sm:hidden">Welcome, GreatStack</p>
-            <div className="relative group">
-              <img
-                className="w-8 border rounded-full"
-                src={assets.company_icon}
-                alt="Company Icon"
-              />
-              <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-12">
-                <ul className="list-none m-0 p-2 bg-white rounded-md border text-sm">
-                  <li className="py-1 px-2 cursor-pointer pr-10" onClick={handleLogout}>
-                    Logout
-                  </li>
-                </ul>
+
+          {companyData && (
+            <div className="flex items-center gap-3">
+              <p className="max-sm:hidden">Welcome, {companyData.name}</p>
+              <div className="relative group">
+                <img
+                  className="w-8 border rounded-full"
+                  src={companyData.image || assets.default_company_icon}
+                  alt="Company Icon"
+                />
+                <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-12">
+                  <ul className="list-none m-0 p-2 bg-white rounded-md border text-sm">
+                    <li
+                      className="py-1 px-2 cursor-pointer pr-10"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <div className="flex items-start">
-        {/* Left Sidebar with option to add job, manage job, view applications */}
+        {/* Left Sidebar with options */}
         <div className="inline-block min-h-screen border-r-2">
           <ul className="flex flex-col items-start pt-5 text-gray-800">
             <NavLink
@@ -78,7 +89,11 @@ const Dashboard = () => {
               }
               to={"/dashboard/view-applications"}
             >
-              <img className="min-w-4" src={assets.person_tick_icon} alt="Person Tick Icon" />
+              <img
+                className="min-w-4"
+                src={assets.person_tick_icon}
+                alt="Person Tick Icon"
+              />
               <p className="max-sm:hidden">View Applications</p>
             </NavLink>
           </ul>
@@ -86,7 +101,8 @@ const Dashboard = () => {
 
         <Outlet />
       </div>
-      <Footer /> 
+
+      <Footer />
     </div>
   );
 };
