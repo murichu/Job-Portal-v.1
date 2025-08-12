@@ -10,8 +10,8 @@ import companyRouter from "./routes/companyRoutes.js";
 import connectCloudinary from "./config/Cloudinary.js";
 import jobRouter from "./routes/jobRoutes.js";
 import userRouter from "./routes/userRouter.js";
+import { clerkMiddleware } from '@clerk/express'
 
-//import { clerkMiddleware } from '@clerk/express'
 //import { serve } from "inngest/express";
 //import { inngest, functions } from "./inngest/index.js"
 
@@ -35,7 +35,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-// app.use(clerkMiddleware());
+app.use(clerkMiddleware());
 
 // Basic route
 app.get("/", (req, res) => {
@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
 app.post("/webhooks", clerkWebhooks);
 
 // User API routes
-app.use("/api/user", userRouter);
+app.use("/api/users", userRouter);
 app.use("/api/company", companyRouter);
 app.use("/api/jobs", jobRouter);
 

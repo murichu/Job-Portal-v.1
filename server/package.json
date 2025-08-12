@@ -12,7 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@clerk/express": "^1.7.10",
+    "@clerk/express": "^1.7.17",
     "@sentry/node": "^8.48.0",
     "@sentry/profiling-node": "^8.48.0",
     "bcrypt": "^5.1.1",
