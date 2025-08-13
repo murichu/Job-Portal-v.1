@@ -9,7 +9,7 @@ const JobCard = ({ job }) => {
     <div className="border p-6 shadow rounded">
       {/* Company Icon */}
       <div className="flex justify-between items-center">
-        <img className="h-8" src={assets.company_icon} alt="Company Icon" />
+        <img className="h-8" src={job.companyId.image} alt="Company Icon" />
       </div>
 
       {/* Job Title */}
@@ -29,7 +29,7 @@ const JobCard = ({ job }) => {
       <p
         className="text-gray-500 text-sm mt-4"
         dangerouslySetInnerHTML={{
-          __html: job.description.slice(0, 150) + "..."
+          __html: job.description.slice(0, 150) + "...",
         }}
       ></p>
 

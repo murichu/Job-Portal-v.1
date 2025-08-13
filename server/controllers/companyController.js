@@ -4,6 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 import generateToken from "../utils/generateToken.js";
 import validator from "validator";
 import Job from "../models/Job.js";
+import JobApplication from "../models/JobApplication.js";
 
 // Register a company
 // Handles creating a new company account with provided details such as name, email, password, etc.
@@ -228,13 +229,31 @@ export const getCompanyPostedJobs = async (req, res) => {
     // Get the company ID from the authenticated request (set by middleware)
     const companyId = req.company._id;
 
-    // Fetch all jobs posted by this company, sorted by newest first
-    const jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID not found in request.",
+      });
+    }
 
-    // (TODO) Include number of applicants for each job (e.g., from applications collection)
+    // Fetch all jobs posted by this company, sorted by newest first
+    const jobs = await Job.find({ companyId }).sort({ createdAt: -1 }).lean();
+
+    // Adding number of applicants for each job
+    const jobsData = await Promise.all(
+      jobs.map(async (job) => {
+        const applicants = await JobApplication.countDocuments({
+          jobId: job._id,
+        });
+
+        // Spread job directly since .lean() returns plain objects
+        return { ...job, applicants };
+      })
+    );
 
     // Send response with jobs
-    res.json({ success: true, jobsData: jobs });
+    return res.json({ success: true, jobsData });
+  
   } catch (error) {
     // Handle unexpected server errors
     console.error("getCompanyPostedJobs error:", error);

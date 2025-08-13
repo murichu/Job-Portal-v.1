@@ -7,19 +7,28 @@ import { assets } from "../assets/assets";
 import kconvert from "k-convert";
 import moment from "moment";
 import JobCard from "../components/JobCard";
-import Footer from '../components/Footer';
-
+import Footer from "../components/Footer";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const ApplyJob = () => {
   const { id } = useParams();
-  const { jobs } = useContext(AppContext);
+  const { jobs, backendUrl } = useContext(AppContext);
   const [JobData, setJobData] = useState(null);
 
   const fetchJob = async () => {
-    const data = jobs.filter((job) => job._id === id);
-    if (data.length !== 0) {
-      setJobData(data[0]);
-      console.log(data[0]);
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/jobs/${id}`);
+
+      if (data.success) {
+        setJobData(data.job);
+        //console.log(data.job);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -76,7 +85,10 @@ const ApplyJob = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start">
             <div className="w-full lg:w-2/3">
               <h2 className="font-bold text-2xl mb-4">Job Description</h2>
-              <div className="rich-text" dangerouslySetInnerHTML={{__html:JobData.description}}></div>
+              <div
+                className="rich-text"
+                dangerouslySetInnerHTML={{ __html: JobData.description }}
+              ></div>
               <button className="bg-blue-600 p-2.5 px-10 text-white rounded mt-10">
                 Apply Now
               </button>
@@ -85,12 +97,19 @@ const ApplyJob = () => {
             {/* Right Section More Jobs*/}
             <div className="w-full lg:w-1/3 mt-8 lg:mt-0 lg: ml-8 space-y-5">
               <h2>More Jobs from {JobData.companyId.name}</h2>
-              {jobs.filter( job => job._id !== JobData._id && job.companyId._id === JobData.companyId._id)
-              .filter( job => true).slice(0,4)
-              .map((job, index) => <JobCard key={index} job={job} /> )}
+              {jobs
+                .filter(
+                  (job) =>
+                    job._id !== JobData._id &&
+                    job.companyId._id === JobData.companyId._id
+                )
+                .filter((job) => true)
+                .slice(0, 4)
+                .map((job, index) => (
+                  <JobCard key={index} job={job} />
+                ))}
             </div>
           </div>
-
         </div>
       </div>
       <Footer />

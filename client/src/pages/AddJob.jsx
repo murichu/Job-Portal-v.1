@@ -5,6 +5,7 @@ import { JobCategories, JobLocations } from "../assets/assets";
 import axios from "axios";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
+import { Loader2 } from "lucide-react";
 
 const AddJob = () => {
   const { backendUrl, companyToken } = useContext(AppContext);
@@ -58,7 +59,11 @@ const AddJob = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "An error occurred while add job."
+      );
     } finally {
       setLoading(false);
     }
@@ -130,7 +135,7 @@ const AddJob = () => {
             onChange={(e) => setLevel(e.target.value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded"
           >
-            <option value="Beginner level">Select Level</option>
+            <option value="Select Level">Select Level</option>
             <option value="Beginner level">Beginner Level</option>
             <option value="Intermediate level">Intermediate Level</option>
             <option value="Senior level">Senior Level</option>
@@ -163,7 +168,7 @@ const AddJob = () => {
       >
         {loading ? (
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <Loader2 className="h-5 w-5 text-white animate-spin" />
             Posting...
           </div>
         ) : (

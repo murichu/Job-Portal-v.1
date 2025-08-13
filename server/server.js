@@ -10,7 +10,7 @@ import companyRouter from "./routes/companyRoutes.js";
 import connectCloudinary from "./config/Cloudinary.js";
 import jobRouter from "./routes/jobRoutes.js";
 import userRouter from "./routes/userRouter.js";
-import { clerkMiddleware } from '@clerk/express'
+import { clerkMiddleware } from "@clerk/express";
 
 //import { serve } from "inngest/express";
 //import { inngest, functions } from "./inngest/index.js"
@@ -44,7 +44,8 @@ app.get("/", (req, res) => {
 });
 
 // Webhook endpoint
-app.post("/webhooks", clerkWebhooks);
+// Instead of app.use(express.json()) for this route
+app.post("/webhooks", express.raw({ type: "application/json" }), clerkWebhooks);
 
 // User API routes
 app.use("/api/users", userRouter);

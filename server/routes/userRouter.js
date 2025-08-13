@@ -6,12 +6,14 @@ import {
   updateUserResume,
 } from "../controllers/userController.js";
 import upload, { handleUploadError } from "../config/multer.js";
+import { requireAuth } from "@clerk/express";
 
 const userRouter = express.Router();
 
 // @route   GET /user
 // @desc    Get authenticated user's profile data
 // @access  Private (should be protected by middleware)
+//userRouter.get("/user", requireAuth(), getUserData);
 userRouter.get("/user", getUserData);
 
 // @route   POST /apply
