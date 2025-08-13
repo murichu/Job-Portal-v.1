@@ -1,12 +1,59 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { assets, jobsApplied } from "../assets/assets";
+import { assets } from "../assets/assets";
 import moment from "moment";
+import { useContext } from "react";
+import { AppContext } from "../context/AppContext";
+import { useAuth, useUser } from "@clerk/clerk-react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Applications = () => {
+  const { userApplications, backendUrl, fetchUserApplications } = useContext(AppContext);
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const [isEdit, setIsEdit] = useState(false);
   const [resume, setResume] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleResumeUpdate = async () => {
+    if (!resume) {
+      toast.error("Please select a resume file");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append("resume", resume);
+
+      const { data } = await axios.post(
+        `${backendUrl}/api/users/update-resume`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setIsEdit(false);
+        setResume(null);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <>
@@ -24,17 +71,18 @@ const Applications = () => {
                 <input
                   id="resumeUpload"
                   onChange={(e) => setResume(e.target.files[0])}
-                  accept="application/pdf"
+                  accept=".pdf"
                   type="file"
                   hidden
                 />
                 <img src={assets.profile_upload_icon} alt="Upload icon" />
               </label>
               <button
-                onClick={() => setIsEdit(false)}
-                className="bg-green-100 border border-green-400 rounded-lg px-4 py-2"
+                onClick={handleResumeUpdate}
+                disabled={isUploading}
+                className="bg-green-100 border border-green-400 rounded-lg px-4 py-2 disabled:opacity-50"
               >
-                Save
+                {isUploading ? "Saving..." : "Save"}
               </button>
             </>
           ) : (
@@ -67,22 +115,30 @@ const Applications = () => {
             </tr>
           </thead>
           <tbody>
-            {jobsApplied.map((job, index) => (
+            {userApplications && userApplications.length > 0 ? (
+              userApplications.map((application, index) => (
               <tr key={index}>
                 <td className="py-3 px-4 flex items-center gap-2 border-b">
-                  <img className="w-8 h-8" src={job.logo} alt='' />
-                  {job.company}
+                  <img className="w-8 h-8" src={application.companyId.image} alt='' />
+                  {application.companyId.name}
                 </td>
-                <td className="py-2 px-4 border-b">{job.title}</td>
-                <td className="py-2 px-4 border-b max-sm:hidden">{job.location}</td>
-                <td className="py-2 px-4 border-b max-sm:hidden">{moment(job.date).format('ll')}</td>
+                <td className="py-2 px-4 border-b">{application.jobId.title}</td>
+                <td className="py-2 px-4 border-b max-sm:hidden">{application.jobId.location}</td>
+                <td className="py-2 px-4 border-b max-sm:hidden">{moment(application.date).format('ll')}</td>
                 <td className="py-2 px-4 border-b">
-                  <span className={`${job.status === 'Accepted' ? 'bg-green-100' : job.status === 'Rejected' ? 'bg-red-100' : 'bg-blue-100'} px-4 py-1.5 rounded`}>
-                    {job.status}
+                  <span className={`${application.status === 'Accepted' ? 'bg-green-100' : application.status === 'Rejected' ? 'bg-red-100' : 'bg-blue-100'} px-4 py-1.5 rounded`}>
+                    {application.status}
                     </span>
                   </td>
               </tr>
-            ))}
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="py-8 text-center text-gray-500">
+                  No applications found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
