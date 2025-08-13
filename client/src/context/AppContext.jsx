@@ -91,7 +91,6 @@ export const AppContextProvider = (props) => {
   const fetchUserData = async () => {
     try {
       const token = await getToken();
-      console.log("Token from Clerk:", token);
 
       if (!token) {
         console.log("No token available");
@@ -104,7 +103,6 @@ export const AppContextProvider = (props) => {
 
       if (data.success) {
         setUserData(data.user);
-        console.log(data.user);
       } else {
         toast.error(data.message || "Failed to fetch user data.");
       }
@@ -115,6 +113,27 @@ export const AppContextProvider = (props) => {
           error.message ||
           "An error occurred while fetching user data."
       );
+    }
+  };
+
+  //Function to fetch user applications
+  const fetchUserApplications = async () => {
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        return;
+      }
+
+      const { data } = await axios.get(`${backendUrl}/api/users/applications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (data.success) {
+        setUserApplications(data.applications);
+      }
+    } catch (error) {
+      console.log("fetchUserApplications error:", error.message);
     }
   };
 
@@ -148,6 +167,7 @@ export const AppContextProvider = (props) => {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      fetchUserApplications();
     }
   }, [user]);
 
@@ -169,6 +189,9 @@ export const AppContextProvider = (props) => {
     userData,
     setUserData,
     fetchUserData,
+    userApplications,
+    setUserApplications,
+    fetchUserApplications,
   };
 
   return (

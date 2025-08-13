@@ -26,29 +26,49 @@ export const clerkWebhooks = async (req, res) => {
 
     switch (type) {
       case "user.created":
-        const newUser = await User.create({
-          _id: data.id, // string ID is fine
-          email: data.email_addresses[0].email_address,
-          name: data.first_name + " " + data.last_name,
-          image: data.image_url,
-          resume: "",
-        });
-        console.log("User created:", newUser);
-        return res.status(200).json({});
+        try {
+          const newUser = await User.create({
+            _id: data.id,
+            email: data.email_addresses[0].email_address,
+            name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+            image: data.image_url || '',
+            resume: "",
+          });
+          console.log("User created successfully:", newUser._id);
+        } catch (error) {
+          if (error.code === 11000) {
+            console.log("User already exists:", data.id);
+          } else {
+            console.error("Error creating user:", error);
+          }
+        }
+        return res.status(200).json({ success: true });
 
       case "user.updated":
-        const updatedUser = await User.findByIdAndUpdate(data.id, {
-          email: data.email_addresses[0].email_address,
-          name: data.first_name + " " + data.last_name,
-          image: data.image_url,
-        });
-        console.log("User updated:", updatedUser);
-        return res.status(200).json({});
+        try {
+          const updatedUser = await User.findByIdAndUpdate(
+            data.id,
+            {
+              email: data.email_addresses[0].email_address,
+              name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+              image: data.image_url || '',
+            },
+            { new: true }
+          );
+          console.log("User updated successfully:", updatedUser?._id);
+        } catch (error) {
+          console.error("Error updating user:", error);
+        }
+        return res.status(200).json({ success: true });
 
       case "user.deleted":
-        await User.findByIdAndDelete(data.id);
-        console.log("User deleted:", data.id);
-        return res.status(200).json({});
+        try {
+          await User.findByIdAndDelete(data.id);
+          console.log("User deleted successfully:", data.id);
+        } catch (error) {
+          console.error("Error deleting user:", error);
+        }
+        return res.status(200).json({ success: true });
 
       default:
         console.log("Unhandled webhook event:", type);

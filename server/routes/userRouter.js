@@ -12,11 +12,11 @@ const userRouter = express.Router();
 
 // @route   GET /user
 // @desc    Get authenticated user's profile data
-// @access  Private (should be protected by middleware)
+// @access  Private
 userRouter.get("/user", requireAuth(), getUserData);
 
 // @route   POST /apply
-// @desc    Apply for a job (should be POST not GET since it's a write operation)
+// @desc    Apply for a job
 // @access  Private
 userRouter.post("/apply", requireAuth(), applyForJob);
 

@@ -2,7 +2,6 @@ import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
 import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
-import { clerkClient } from "@clerk/express";
 
 // Get user data
 export const getUserData = async (req, res) => {
@@ -48,7 +47,7 @@ export const applyForJob = async (req, res) => {
     if (isAlreadyApplied) {
       return res
         .status(400)
-        .json({ success: false, message: "Already applied" });
+        .json({ success: false, message: "Already applied for this job" });
     }
 
     // Check if job exists
@@ -73,7 +72,7 @@ export const applyForJob = async (req, res) => {
       // MongoDB duplicate key error from unique index
       return res
         .status(400)
-        .json({ success: false, message: "Already applied" });
+        .json({ success: false, message: "Already applied for this job" });
     }
     console.error("applyForJob Error:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -95,14 +94,8 @@ export const getUserJobApplications = async (req, res) => {
     const applications = await JobApplication.find({ userId })
       .populate("companyId", "name email image")
       .populate("jobId", "title description location category level salary")
+      .sort({ createdAt: -1 })
       .exec();
-
-    if (!applications.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No job applications found for this user",
-      });
-    }
 
     res.status(200).json({ success: true, applications });
   } catch (error) {
@@ -123,7 +116,7 @@ export const updateUserResume = async (req, res) => {
       });
     }
 
-    const resumeFile = req.resumeFile;
+    const resumeFile = req.file; // Changed from req.resumeFile to req.file
 
     const userData = await User.findById(userId);
     if (!userData) {
@@ -155,12 +148,12 @@ export const updateUserResume = async (req, res) => {
       });
 
       userData.resume = resumeUpload.secure_url;
+      await userData.save();
     }
 
-    await userData.save();
     res
       .status(200)
-      .json({ success: true, message: "Resume updated successfully" });
+      .json({ success: true, message: "Resume updated successfully", user: userData });
   } catch (error) {
     console.error("updateUserResume Error:", error.message);
     res.status(500).json({ success: false, message: "Server error" });

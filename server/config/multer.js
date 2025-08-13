@@ -21,22 +21,22 @@ const storage = multer.diskStorage({
 
 // File type filter - only accept images
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
+  const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
   const fileExtension = path.extname(file.originalname).toLowerCase();
 
   if (
     allowedMimeTypes.includes(file.mimetype) &&
-    [".jpg", ".jpeg", ".png"].includes(fileExtension)
+    [".jpg", ".jpeg", ".png", ".pdf"].includes(fileExtension)
   ) {
     cb(null, true);
   } else {
-    cb(new Error("Only .jpg, .jpeg, and .png files are allowed"), false);
+    cb(new Error("Only .jpg, .jpeg, .png, and .pdf files are allowed"), false);
   }
 };
 
 // Configure file size limits and other options
 const limits = {
-  fileSize: 5 * 1024 * 1024, // 5 MB
+  fileSize: 10 * 1024 * 1024, // 10 MB for PDFs
   files: 1,
 };
 
