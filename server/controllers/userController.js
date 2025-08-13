@@ -2,12 +2,20 @@ import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
 import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
+import { clerkClient } from "@clerk/express";
 
 // Get user data
 export const getUserData = async (req, res) => {
-  const { userId } = await req.auth();
-
   try {
+    const { userId } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not authenticated" 
+      });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res
@@ -24,10 +32,17 @@ export const getUserData = async (req, res) => {
 
 // Apply for Job
 export const applyForJob = async (req, res) => {
-  const { jobId } = req.body;
-  const userId = req.auth.userId;
-
   try {
+    const { jobId } = req.body;
+    const { userId } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not authenticated" 
+      });
+    }
+
     // Check if already applied
     const isAlreadyApplied = await JobApplication.findOne({ jobId, userId });
     if (isAlreadyApplied) {
@@ -68,7 +83,14 @@ export const applyForJob = async (req, res) => {
 // Get user applied applications
 export const getUserJobApplications = async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const { userId } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not authenticated" 
+      });
+    }
 
     const applications = await JobApplication.find({ userId })
       .populate("companyId", "name email image")
@@ -92,7 +114,15 @@ export const getUserJobApplications = async (req, res) => {
 // Update user profile (Resume)
 export const updateUserResume = async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const { userId } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not authenticated" 
+      });
+    }
+
     const resumeFile = req.resumeFile;
 
     const userData = await User.findById(userId);

@@ -10,11 +10,15 @@ import JobCard from "../components/JobCard";
 import Footer from "../components/Footer";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 const ApplyJob = () => {
   const { id } = useParams();
-  const { jobs, backendUrl } = useContext(AppContext);
+  const { jobs, backendUrl, userData } = useContext(AppContext);
   const [JobData, setJobData] = useState(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const { getToken } = useAuth();
+  const { user } = useUser();
 
   const fetchJob = async () => {
     try {
@@ -32,6 +36,34 @@ const ApplyJob = () => {
     }
   };
 
+  const handleApplyJob = async () => {
+    if (!user) {
+      toast.error("Please login to apply for jobs");
+      return;
+    }
+
+    try {
+      setIsApplying(true);
+      const token = await getToken();
+      
+      const { data } = await axios.post(
+        `${backendUrl}/api/users/apply`,
+        { jobId: id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setIsApplying(false);
+    }
+  };
   useEffect(() => {
     fetchJob();
   }, [id]);
@@ -73,8 +105,12 @@ const ApplyJob = () => {
               </div>
             </div>
             <div className="flex flex-col justify-center text-end text-sm max-md:mx-auto max-md:text-center">
-              <button className="bg-blue-600 p-2.5 px-10 text-white rounded">
-                Apply Now
+              <button 
+                onClick={handleApplyJob}
+                disabled={isApplying || !user}
+                className="bg-blue-600 p-2.5 px-10 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isApplying ? "Applying..." : "Apply Now"}
               </button>
               <p className="mt-2 text-gray-600 text-center">
                 Posted {moment(JobData.date).fromNow()}
@@ -89,8 +125,12 @@ const ApplyJob = () => {
                 className="rich-text"
                 dangerouslySetInnerHTML={{ __html: JobData.description }}
               ></div>
-              <button className="bg-blue-600 p-2.5 px-10 text-white rounded mt-10">
-                Apply Now
+              <button 
+                onClick={handleApplyJob}
+                disabled={isApplying || !user}
+                className="bg-blue-600 p-2.5 px-10 text-white rounded mt-10 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isApplying ? "Applying..." : "Apply Now"}
               </button>
             </div>
 

@@ -45,7 +45,7 @@ app.get("/", (req, res) => {
 
 // Webhook endpoint
 // Instead of app.use(express.json()) for this route
-app.post("/webhooks", express.raw({ type: "application/json" }), clerkWebhooks);
+app.post("/api/webhooks", express.raw({ type: "application/json" }), clerkWebhooks);
 
 // User API routes
 app.use("/api/users", userRouter);
