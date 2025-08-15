@@ -7,13 +7,17 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token (user or company)
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("Token");
+    const userToken = localStorage.getItem("Token");
+    const companyToken = localStorage.getItem("companyToken");
+
+    const token = userToken || companyToken; // Prefer userToken if both exist
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -24,8 +28,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
       localStorage.removeItem("Token");
+      localStorage.removeItem("companyToken");
       window.location.href = "/";
     }
     return Promise.reject(error);
@@ -82,8 +86,12 @@ export const AppContextProvider = (props) => {
     if (useCache) {
       const cachedJobs = localStorage.getItem(cacheKey);
       const cacheTime = localStorage.getItem(cacheTimeKey);
-      
-      if (cachedJobs && cacheTime && (Date.now() - parseInt(cacheTime)) < cacheExpiry) {
+
+      if (
+        cachedJobs &&
+        cacheTime &&
+        Date.now() - parseInt(cacheTime) < cacheExpiry
+      ) {
         setJobs(JSON.parse(cachedJobs));
         return;
       }
@@ -119,6 +127,7 @@ export const AppContextProvider = (props) => {
 
       if (data.success) {
         setCompanyData(data.company);
+        console.log(data.company);
       } else {
         toast.error(data.message || "Failed to fetch company data.");
       }
@@ -127,7 +136,9 @@ export const AppContextProvider = (props) => {
       if (!error.response || error.response.status >= 500) {
         toast.error("Network error. Please check your connection.");
       } else {
-        toast.error(error.response?.data?.message || "Failed to fetch company data.");
+        toast.error(
+          error.response?.data?.message || "Failed to fetch company data."
+        );
       }
     }
   };
@@ -145,7 +156,9 @@ export const AppContextProvider = (props) => {
     } catch (error) {
       console.log("fetchUserData error:", error.message);
       if (error.response?.status !== 401) {
-        toast.error(error.response?.data?.message || "Failed to fetch user data.");
+        toast.error(
+          error.response?.data?.message || "Failed to fetch user data."
+        );
       }
     }
   };

@@ -73,7 +73,6 @@ export const assets = {
 };
 
 export const JobCategories = [
-  "Select Category",
   "Programming",
   "Data Science",
   "Designing",
@@ -84,7 +83,6 @@ export const JobCategories = [
 ];
 
 export const JobLocations = [
-  "Select Location",
   "Bangalore",
   "Washington",
   "Hyderabad",

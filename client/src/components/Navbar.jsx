@@ -5,13 +5,17 @@ import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { setShowRecruiterLogin, setShowUserLogin, userData, logout } =
+  const { setShowRecruiterLogin, setShowUserLogin, userData, logout,} =
     useContext(AppContext);
 
   const handleLogout = () => {
     logout();
     navigate("/");
+    
   };
+
+  //<Link to="/applications" className="hover:underline">Applied Jobs</Link>
+          // <span className="hidden sm:inline-block">|</span>
 
   return (
     <div className="shadow py-4">
@@ -25,10 +29,7 @@ const Navbar = () => {
 
         {userData ? (
           <div className="flex items-center gap-4 text-gray-700">
-            <Link to="/applications" className="hover:underline">
-              Applied Jobs
-            </Link>
-            <span className="hidden sm:inline-block">|</span>
+            
             <div className="flex items-center gap-2">
               <img 
                 src={userData.image} 

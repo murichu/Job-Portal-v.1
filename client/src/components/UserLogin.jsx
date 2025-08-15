@@ -25,13 +25,16 @@ const UserLogin = () => {
     useContext(AppContext);
 
   // Memoized input change handler
-  const handleInputChange = useCallback((field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear field-specific error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  }, [errors]);
+  const handleInputChange = useCallback(
+    (field, value) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      // Clear field-specific error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [errors]
+  );
 
   // Create and cleanup image preview URL
   useEffect(() => {
@@ -53,43 +56,18 @@ const UserLogin = () => {
     };
   }, []);
 
-  // Client-side validation
-  const validateForm = useCallback(() => {
-    const newErrors = {};
-
-    if (formType === "Sign Up" && !formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formType === "Sign Up" && formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long";
-    }
-
-    if (formType === "Sign Up" && isTextDataSubmitted && !image) {
-      newErrors.image = "Profile picture is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formType, formData, isTextDataSubmitted, image]);
-
   // Handle successful authentication
-  const handleAuthSuccess = useCallback((data) => {
-    setUserData(data.user);
-    setToken(data.token);
-    localStorage.setItem("Token", data.token);
-    setShowUserLogin(false);
-    toast.success(`Welcome ${data.user.name}!`);
-    navigate("/");
-  }, [setUserData, setToken, setShowUserLogin, navigate]);
+  const handleAuthSuccess = useCallback(
+    (data) => {
+      setUserData(data.user);
+      setToken(data.token);
+      localStorage.setItem("Token", data.token);
+      setShowUserLogin(false);
+      toast.success(`Welcome ${data.user.name}!`);
+      navigate("/");
+    },
+    [setUserData, setToken, setShowUserLogin, navigate]
+  );
 
   // Handle form submission
   const onSubmitHandler = async (e) => {
@@ -116,6 +94,7 @@ const UserLogin = () => {
 
         if (data.success) {
           handleAuthSuccess(data);
+          navigate("/");
         } else {
           toast.error(data.message);
         }
@@ -137,13 +116,15 @@ const UserLogin = () => {
 
         if (data.success) {
           handleAuthSuccess(data);
+          navigate("/login");
         } else {
           toast.error(data.message);
         }
       }
     } catch (error) {
       console.error("User login error", error);
-      const errorMessage = error.response?.data?.message || 
+      const errorMessage =
+        error.response?.data?.message ||
         "Something went wrong. Please try again.";
       toast.error(errorMessage);
     } finally {
@@ -164,17 +145,15 @@ const UserLogin = () => {
     <div className="fixed inset-0 z-50 backdrop-blur-sm bg-black/40 flex justify-center items-center">
       <form
         onSubmit={onSubmitHandler}
-        className="relative bg-white p-8 rounded-xl text-slate-500 w-full max-w-md mx-4 shadow-2xl"
+        className="relative bg-white p-12 rounded-xl text-slate-500 w-full max-w-md mx-4 shadow-2xl"
       >
-        {/* Close button */}
-        <button
-          type="button"
+        {/* Close modal */}
+        <img
           onClick={() => setShowUserLogin(false)}
-          className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors"
-          disabled={isLoading}
-        >
-          <img src={assets.cross_icon} alt="Close" className="w-5 h-5" />
-        </button>
+          className="absolute top-5 right-5 cursor-pointer"
+          src={assets.cross_icon}
+          alt="Close"
+        />
 
         {/* Heading */}
         <div className="text-center mb-6">
@@ -224,7 +203,11 @@ const UserLogin = () => {
             {formType === "Sign Up" && (
               <div>
                 <div className="border border-gray-300 px-4 py-3 flex items-center gap-3 rounded-lg focus-within:border-blue-500 transition-colors">
-                  <img src={assets.person_icon} alt="Name Icon" className="w-4 h-4" />
+                  <img
+                    src={assets.person_icon}
+                    alt="Name Icon"
+                    className="w-4 h-4"
+                  />
                   <input
                     className="outline-none text-sm w-full placeholder-gray-400"
                     value={formData.name}
@@ -244,7 +227,11 @@ const UserLogin = () => {
             {/* Email field */}
             <div>
               <div className="border border-gray-300 px-4 py-3 flex items-center gap-3 rounded-lg focus-within:border-blue-500 transition-colors">
-                <img src={assets.email_icon} alt="Email Icon" className="w-4 h-4" />
+                <img
+                  src={assets.email_icon}
+                  alt="Email Icon"
+                  className="w-4 h-4"
+                />
                 <input
                   className="outline-none text-sm w-full placeholder-gray-400"
                   value={formData.email}
@@ -263,11 +250,17 @@ const UserLogin = () => {
             {/* Password field */}
             <div>
               <div className="border border-gray-300 px-4 py-3 flex items-center gap-3 rounded-lg focus-within:border-blue-500 transition-colors">
-                <img src={assets.lock_icon} alt="Password Icon" className="w-4 h-4" />
+                <img
+                  src={assets.lock_icon}
+                  alt="Password Icon"
+                  className="w-4 h-4"
+                />
                 <input
                   className="outline-none text-sm w-full placeholder-gray-400"
                   value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("password", e.target.value)
+                  }
                   type="password"
                   placeholder="Password"
                   disabled={isLoading}
@@ -303,14 +296,18 @@ const UserLogin = () => {
           {isLoading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              {formType === "Login" ? "Signing in..." : isTextDataSubmitted ? "Creating Account..." : "Processing..."}
+              {formType === "Login"
+                ? "Signing in..."
+                : isTextDataSubmitted
+                ? "Creating Account..."
+                : "Processing..."}
             </>
+          ) : formType === "Login" ? (
+            "Sign In"
+          ) : isTextDataSubmitted ? (
+            "Create Account"
           ) : (
-            formType === "Login"
-              ? "Sign In"
-              : isTextDataSubmitted
-              ? "Create Account"
-              : "Continue"
+            "Continue"
           )}
         </button>
 

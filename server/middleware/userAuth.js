@@ -8,7 +8,7 @@ export const protectedRouteRateLimit = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs for protected routes
   message: {
     success: false,
-    message: "Too many requests, please try again later."
+    message: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -20,7 +20,7 @@ export const protectUser = async (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.token;
   let token;
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.substring(7); // Remove 'Bearer ' prefix
   } else if (authHeader) {
     token = authHeader; // Fallback for legacy token header
@@ -63,12 +63,12 @@ export const protectUser = async (req, res, next) => {
     console.error("protectUser error:", error);
 
     // Handle different JWT errors
-    if (error.name === 'TokenExpiredError') {
+    if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
         message: "Token expired. Please login again.",
       });
-    } else if (error.name === 'JsonWebTokenError') {
+    } else if (error.name === "JsonWebTokenError") {
       return res.status(401).json({
         success: false,
         message: "Invalid token. Please login again.",
@@ -87,7 +87,7 @@ export const optionalAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.token;
   let token;
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.substring(7);
   } else if (authHeader) {
     token = authHeader;
@@ -97,7 +97,7 @@ export const optionalAuth = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id).select("-password").lean();
-      
+
       if (user) {
         req.user = user;
         req.userId = user._id;

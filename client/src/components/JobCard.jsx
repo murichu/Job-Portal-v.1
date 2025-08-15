@@ -2,14 +2,14 @@ import React from "react";
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 
-const JobCard = ({ job }) => {
+const JobCard = ({ job, hasApplied }) => {
   const navigate = useNavigate();
 
   return (
     <div className="border p-6 shadow rounded">
       {/* Company Icon */}
       <div className="flex justify-between items-center">
-        <img className="h-8" src={job.companyId.image} alt="Company Icon" />
+        <img className="h-8" src={job.company.image} alt="Company Icon" />
       </div>
 
       {/* Job Title */}
@@ -33,17 +33,27 @@ const JobCard = ({ job }) => {
         }}
       ></p>
 
-      {/* Apply and Learn More Buttons */}
+      {/* Apply / Applied and Learn More Buttons */}
       <div className="mt-4 flex gap-4 text-sm">
-        <button
-          onClick={() => {
-            navigate(`/apply-job/${job._id}`);
-            window.scrollTo(0, 0);
-          }}
-          className="bg-gray-400 hover:bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Apply Now
-        </button>
+        {hasApplied ? (
+          <button
+            disabled
+            className="bg-green-600 text-white px-4 py-2 rounded cursor-default"
+          >
+            Applied ✓
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              navigate(`/apply-job/${job._id}`);
+              window.scrollTo(0, 0);
+            }}
+            className="bg-gray-400 hover:bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Apply Now
+          </button>
+        )}
+
         <button
           onClick={() => {
             navigate(`/apply-job/${job._id}`);

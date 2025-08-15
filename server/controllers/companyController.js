@@ -9,12 +9,45 @@ import JobApplication from "../models/JobApplication.js";
 // Register a company
 // Handles creating a new company account with provided details such as name, email, password, etc.
 export const registerCompany = async (req, res) => {
-  const { name, email, password } = req.body;
+  const {
+    name,
+    email,
+    password,
+    recruiterName,
+    recruiterPosition,
+    companyPhone,
+    companyLocation,
+  } = req.body;
   const imageFile = req.file;
 
   // Check for missing fields
-  if (!name || !email || !password || !imageFile) {
+  if (
+    !name ||
+    !email ||
+    !password ||
+    !recruiterName ||
+    !recruiterPosition ||
+    !companyPhone ||
+    !companyLocation ||
+    !imageFile
+  ) {
     return res.status(400).json({ success: false, message: "Missing details" });
+  }
+
+  /// Sanitize inputs
+  const sanitizedName = name.trim();
+  const sanitizedEmail = email.trim().toLowerCase();
+  const sanitizedRecruiterName = recruiterName.trim();
+  const sanitizedRecruiterPosition = recruiterPosition.trim();
+  const sanitizedPhone = companyPhone.trim();
+  const sanitizedLocation = companyLocation.trim();
+
+  // Validate name
+  if (sanitizedName.length < 2 || sanitizedName.length > 50) {
+    return res.status(400).json({
+      success: false,
+      message: "Name must be between 2 and 50 characters",
+    });
   }
 
   // Validate email format
@@ -59,7 +92,12 @@ export const registerCompany = async (req, res) => {
     // Upload image to Cloudinary with error handling
     let imageUpload;
     try {
-      imageUpload = await cloudinary.uploader.upload(imageFile.path);
+      imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        folder: "company_profiles",
+        transformation: [
+          { width: 200, height: 200, crop: "fill", quality: "auto" },
+        ],
+      });
     } catch (cloudErr) {
       console.error("Cloudinary upload error:", cloudErr);
       return res.status(500).json({
@@ -70,9 +108,13 @@ export const registerCompany = async (req, res) => {
 
     // Create new company
     const company = await Company.create({
-      name,
-      email,
+      name: sanitizedName,
+      email: sanitizedEmail,
       password: hashPassword,
+      recruiterName: sanitizedRecruiterName,
+      recruiterPosition: sanitizedRecruiterPosition,
+      companyPhone: sanitizedPhone,
+      companyLocation: sanitizedLocation,
       image: imageUpload.secure_url,
     });
 
@@ -84,11 +126,25 @@ export const registerCompany = async (req, res) => {
         name: company.name,
         email: company.email,
         image: company.image,
+        recruiterName: company.recruiterName,
+        recruiterPosition: company.recruiterPosition,
+        companyPhone: company.companyPhone,
+        companyLocation: company.companyLocation,
       },
       token: generateToken(company._id),
+      message: "Company created successfully",
     });
   } catch (error) {
-    console.error("Register error:", error);
+    console.error("Register Company error:", error);
+
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Server error.",
@@ -161,6 +217,8 @@ export const getCompanyData = async (req, res) => {
 
     // Respond with the company data
     res.json({ success: true, company });
+
+    // console.log(company);
   } catch (error) {
     // Log any unexpected server errors
     console.error("Login error:", error);

@@ -13,7 +13,7 @@ export const authRateLimit = rateLimit({
   max: 5, // limit each IP to 5 requests per windowMs
   message: {
     success: false,
-    message: "Too many authentication attempts, please try again later."
+    message: "Too many authentication attempts, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -34,19 +34,19 @@ export const registerUser = async (req, res) => {
   const sanitizedName = name.trim();
   const sanitizedEmail = email.trim().toLowerCase();
 
-  // Validate email format
-  if (!validator.isEmail(sanitizedEmail)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid email format",
-    });
-  }
-
   // Validate name
   if (sanitizedName.length < 2 || sanitizedName.length > 50) {
     return res.status(400).json({
       success: false,
       message: "Name must be between 2 and 50 characters",
+    });
+  }
+
+  // Validate email format
+  if (!validator.isEmail(sanitizedEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format",
     });
   }
 
@@ -87,8 +87,8 @@ export const registerUser = async (req, res) => {
       imageUpload = await cloudinary.uploader.upload(imageFile.path, {
         folder: "user_profiles",
         transformation: [
-          { width: 200, height: 200, crop: "fill", quality: "auto" }
-        ]
+          { width: 200, height: 200, crop: "fill", quality: "auto" },
+        ],
       });
     } catch (cloudErr) {
       console.error("Cloudinary upload error:", cloudErr);
@@ -120,7 +120,7 @@ export const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Register User error:", error);
-    
+
     // Handle specific MongoDB errors
     if (error.code === 11000) {
       return res.status(409).json({
@@ -128,7 +128,7 @@ export const registerUser = async (req, res) => {
         message: "Email already registered",
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       message: "Server error.",
@@ -161,7 +161,9 @@ export const loginUser = async (req, res) => {
 
   try {
     // Check if a user with the provided email exists
-    const user = await User.findOne({ email: sanitizedEmail }).select("+password");
+    const user = await User.findOne({ email: sanitizedEmail }).select(
+      "+password"
+    );
 
     if (!user) {
       // If no user is found, return an error response
@@ -216,6 +218,7 @@ export const getUserData = async (req, res) => {
 
     // Respond with the user data
     res.json({ success: true, user });
+    //console.log(user);
   } catch (error) {
     // Log any unexpected server errors
     console.error("Login error:", error);
@@ -256,18 +259,18 @@ export const applyForJob = async (req, res) => {
 
     // Check if job is visible
     if (!jobData.visible) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "This job is no longer available" 
+      return res.status(400).json({
+        success: false,
+        message: "This job is no longer available",
       });
     }
 
     // Check if already applied (with better error handling)
     const existingApplication = await JobApplication.findOne({ jobId, userId });
     if (existingApplication) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "You have already applied for this job" 
+      return res.status(400).json({
+        success: false,
+        message: "You have already applied for this job",
       });
     }
 
@@ -285,9 +288,10 @@ export const applyForJob = async (req, res) => {
   } catch (error) {
     if (error.code === 11000) {
       // MongoDB duplicate key error from unique index
-      return res
-        .status(400)
-        .json({ success: false, message: "You have already applied for this job" });
+      return res.status(400).json({
+        success: false,
+        message: "You have already applied for this job",
+      });
     }
     console.error("applyForJob Error:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -311,24 +315,24 @@ export const getUserJobApplications = async (req, res) => {
 
     const [applications, total] = await Promise.all([
       JobApplication.find({ userId })
-      .populate("companyId", "name email image")
-      .populate("jobId", "title description location category level salary")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-      JobApplication.countDocuments({ userId })
+        .populate("companyId", "name email image")
+        .populate("jobId", "title description location category level salary")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      JobApplication.countDocuments({ userId }),
     ]);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       applications,
       pagination: {
         current: page,
         total: Math.ceil(total / limit),
         count: applications.length,
-        totalApplications: total
-      }
+        totalApplications: total,
+      },
     });
   } catch (error) {
     console.error("getUserJobApplications Error:", error.message);

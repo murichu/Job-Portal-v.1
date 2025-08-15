@@ -5,14 +5,19 @@ import { assets } from "../assets/assets";
 import moment from "moment";
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
-import { useAuth, useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
 const Applications = () => {
-  const { userApplications, backendUrl, fetchUserApplications } = useContext(AppContext);
-  const { getToken } = useAuth();
-  const { user } = useUser();
+  const {
+    userApplications,
+    backendUrl,
+    fetchUserApplications,
+    token,
+    setToken,
+    setUserData,
+  } = useContext(AppContext);
+
   const [isEdit, setIsEdit] = useState(false);
   const [resume, setResume] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,16 +30,23 @@ const Applications = () => {
 
     try {
       setIsUploading(true);
-      const token = await getToken();
+
+      // Get token from context or localStorage
+      const authToken = token || localStorage.getItem("token");
+      if (!authToken) {
+        toast.error("You are not logged in");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("resume", resume);
 
       const { data } = await axios.post(
-        `${backendUrl}/api/users/update-resume`,
+        `${backendUrl}/api/user/update-resume`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -44,6 +56,7 @@ const Applications = () => {
         toast.success(data.message);
         setIsEdit(false);
         setResume(null);
+        fetchUserApplications(); // refresh after upload
       } else {
         toast.error(data.message);
       }
@@ -109,28 +122,50 @@ const Applications = () => {
             <tr>
               <th className="py-3 px-4 border-b text-left">Company</th>
               <th className="py-3 px-4 border-b text-left">Job Title</th>
-              <th className="py-3 px-4 border-b text-left max-sm:hidden">Location</th>
-              <th className="py-3 px-4 border-b text-left max-sm:hidden">Date</th>
+              <th className="py-3 px-4 border-b text-left max-sm:hidden">
+                Location
+              </th>
+              <th className="py-3 px-4 border-b text-left max-sm:hidden">
+                Date
+              </th>
               <th className="py-3 px-4 border-b text-left">Status</th>
             </tr>
           </thead>
           <tbody>
             {userApplications && userApplications.length > 0 ? (
               userApplications.map((application, index) => (
-              <tr key={index}>
-                <td className="py-3 px-4 flex items-center gap-2 border-b">
-                  <img className="w-8 h-8" src={application.companyId.image} alt='' />
-                  {application.companyId.name}
-                </td>
-                <td className="py-2 px-4 border-b">{application.jobId.title}</td>
-                <td className="py-2 px-4 border-b max-sm:hidden">{application.jobId.location}</td>
-                <td className="py-2 px-4 border-b max-sm:hidden">{moment(application.date).format('ll')}</td>
-                <td className="py-2 px-4 border-b">
-                  <span className={`${application.status === 'Accepted' ? 'bg-green-100' : application.status === 'Rejected' ? 'bg-red-100' : 'bg-blue-100'} px-4 py-1.5 rounded`}>
-                    {application.status}
+                <tr key={index}>
+                  <td className="py-3 px-4 flex items-center gap-2 border-b">
+                    <img
+                      className="w-8 h-8"
+                      src={application.companyId.image}
+                      alt=""
+                    />
+                    {application.companyId.name}
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    {application.jobId.title}
+                  </td>
+                  <td className="py-2 px-4 border-b max-sm:hidden">
+                    {application.jobId.location}
+                  </td>
+                  <td className="py-2 px-4 border-b max-sm:hidden">
+                    {moment(application.date).format("ll")}
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    <span
+                      className={`${
+                        application.status === "Accepted"
+                          ? "bg-green-100"
+                          : application.status === "Rejected"
+                          ? "bg-red-100"
+                          : "bg-blue-100"
+                      } px-4 py-1.5 rounded`}
+                    >
+                      {application.status}
                     </span>
                   </td>
-              </tr>
+                </tr>
               ))
             ) : (
               <tr>

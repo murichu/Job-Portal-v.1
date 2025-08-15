@@ -15,12 +15,12 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
-  const { showRecruiterLogin, companyToken, setShowUserLogin, userData } =
+  const { showRecruiterLogin, showUserLogin, companyToken, userData } =
     useContext(AppContext);
 
   return (
     <div>
-      {setShowUserLogin && <UserLogin />}
+      {showUserLogin && <UserLogin />}
       {showRecruiterLogin && <RecruiterLogin />}
       {/* Toast container to show notifications */}
       <ToastContainer position="top-right" autoClose={3000} />

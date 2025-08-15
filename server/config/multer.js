@@ -14,14 +14,26 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = path.join(uploadsDir, safeName);
+
+    // Check if file with same name already exists
+    if (fs.existsSync(filePath)) {
+      return cb(new Error("A file with this name already exists."), null);
+    }
+
+    cb(null, safeName);
   },
 });
 
-// File type filter - only accept images
+// File type filter
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "application/pdf",
+  ];
   const fileExtension = path.extname(file.originalname).toLowerCase();
 
   if (
@@ -34,27 +46,26 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configure file size limits and other options
+// Limits
 const limits = {
-  fileSize: 10 * 1024 * 1024, // 10 MB for PDFs
+  fileSize: 10 * 1024 * 1024, // 10 MB
   files: 1,
 };
 
-// Create multer middleware
 const upload = multer({
   storage,
   fileFilter,
   limits,
 });
 
-// Multer error handler middleware
+// Error handler
 export const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     switch (err.code) {
       case "LIMIT_FILE_SIZE":
         return res.status(400).json({
           success: false,
-          message: "File too large. Maximum size is 5MB.",
+          message: "File too large. Maximum size is 10MB.",
         });
       case "LIMIT_FILE_COUNT":
         return res.status(400).json({

@@ -105,6 +105,9 @@ const AddJob = () => {
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded"
           >
+            <option value="Select Category" disabled selected hidden>
+              Select Category
+            </option>
             {JobCategories.map((cat, index) => (
               <option key={index} value={cat}>
                 {cat}
@@ -120,9 +123,12 @@ const AddJob = () => {
             onChange={(e) => setLocation(e.target.value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded"
           >
-            {JobLocations.map((loc, index) => (
-              <option key={index} value={loc}>
-                {loc}
+            <option value="Select Location" disabled selected hidden>
+              Select Location
+            </option>
+            {JobLocations.map((location, index) => (
+              <option key={index} value={location}>
+                {location}
               </option>
             ))}
           </select>
@@ -135,7 +141,9 @@ const AddJob = () => {
             onChange={(e) => setLevel(e.target.value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded"
           >
-            <option value="Select Level">Select Level</option>
+            <option value="Select Level" disabled selected hidden>
+              Select Level
+            </option>
             <option value="Beginner level">Beginner Level</option>
             <option value="Intermediate level">Intermediate Level</option>
             <option value="Senior level">Senior Level</option>
