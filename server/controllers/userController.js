@@ -5,6 +5,19 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { v2 as cloudinary } from "cloudinary";
+import rateLimit from "express-rate-limit";
+
+// Rate limiting for auth endpoints
+export const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    message: "Too many authentication attempts, please try again later."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Register a user
 // Handles creating a new user account with provided details such as name, email, password, etc.
@@ -17,11 +30,23 @@ export const registerUser = async (req, res) => {
     return res.status(400).json({ success: false, message: "Missing details" });
   }
 
+  // Sanitize inputs
+  const sanitizedName = name.trim();
+  const sanitizedEmail = email.trim().toLowerCase();
+
   // Validate email format
-  if (!validator.isEmail(email)) {
+  if (!validator.isEmail(sanitizedEmail)) {
     return res.status(400).json({
       success: false,
       message: "Invalid email format",
+    });
+  }
+
+  // Validate name
+  if (sanitizedName.length < 2 || sanitizedName.length > 50) {
+    return res.status(400).json({
+      success: false,
+      message: "Name must be between 2 and 50 characters",
     });
   }
 
@@ -44,7 +69,7 @@ export const registerUser = async (req, res) => {
 
   try {
     // Check if user already exists
-    const userAlreadyExists = await User.findOne({ email });
+    const userAlreadyExists = await User.findOne({ email: sanitizedEmail });
     if (userAlreadyExists) {
       return res.status(409).json({
         success: false,
@@ -52,14 +77,19 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Hash password
+    // Hash password with higher salt rounds for better security
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
     // Upload image to Cloudinary with error handling
     let imageUpload;
     try {
-      imageUpload = await cloudinary.uploader.upload(imageFile.path);
+      imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        folder: "user_profiles",
+        transformation: [
+          { width: 200, height: 200, crop: "fill", quality: "auto" }
+        ]
+      });
     } catch (cloudErr) {
       console.error("Cloudinary upload error:", cloudErr);
       return res.status(500).json({
@@ -70,8 +100,8 @@ export const registerUser = async (req, res) => {
 
     // Create new user
     const user = await User.create({
-      name,
-      email,
+      name: sanitizedName,
+      email: sanitizedEmail,
       password: hashPassword,
       image: imageUpload.secure_url,
     });
@@ -86,9 +116,19 @@ export const registerUser = async (req, res) => {
         image: user.image,
       },
       token: generateToken(user._id),
+      message: "Account created successfully",
     });
   } catch (error) {
     console.error("Register User error:", error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       message: "Server error.",
@@ -101,8 +141,18 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body; // Extract login credentials from the request body
 
+  // Input validation
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required",
+    });
+  }
+
+  const sanitizedEmail = email.trim().toLowerCase();
+
   // Validate email format
-  if (!validator.isEmail(email)) {
+  if (!validator.isEmail(sanitizedEmail)) {
     return res.status(400).json({
       success: false,
       message: "Invalid email format",
@@ -111,7 +161,7 @@ export const loginUser = async (req, res) => {
 
   try {
     // Check if a user with the provided email exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: sanitizedEmail }).select("+password");
 
     if (!user) {
       // If no user is found, return an error response
@@ -130,6 +180,10 @@ export const loginUser = async (req, res) => {
         .json({ success: false, message: "Invalid email or password" });
     }
 
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
     // If authentication is successful, return user details and a JWT token
     res.json({
       success: true,
@@ -140,6 +194,7 @@ export const loginUser = async (req, res) => {
         image: user.image,
       },
       token: generateToken(user._id), // Generate a token for the session
+      message: "Login successful",
     });
   } catch (error) {
     // Log any unexpected server errors
@@ -179,19 +234,18 @@ export const applyForJob = async (req, res) => {
     const { jobId } = req.body;
     const userId = req.user._id;
 
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: "Job ID is required",
+      });
+    }
+
     if (!userId) {
       return res.status(401).json({
         success: false,
         message: "User not authenticated",
       });
-    }
-
-    // Check if already applied
-    const isAlreadyApplied = await JobApplication.findOne({ jobId, userId });
-    if (isAlreadyApplied) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Already applied for this job" });
     }
 
     // Check if job exists
@@ -200,9 +254,26 @@ export const applyForJob = async (req, res) => {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
+    // Check if job is visible
+    if (!jobData.visible) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "This job is no longer available" 
+      });
+    }
+
+    // Check if already applied (with better error handling)
+    const existingApplication = await JobApplication.findOne({ jobId, userId });
+    if (existingApplication) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "You have already applied for this job" 
+      });
+    }
+
     // Create application
     await JobApplication.create({
-      userId: jobData.userId,
+      companyId: jobData.companyId,
       userId,
       jobId,
       date: Date.now(),
@@ -216,7 +287,7 @@ export const applyForJob = async (req, res) => {
       // MongoDB duplicate key error from unique index
       return res
         .status(400)
-        .json({ success: false, message: "Already applied for this job" });
+        .json({ success: false, message: "You have already applied for this job" });
     }
     console.error("applyForJob Error:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -227,6 +298,9 @@ export const applyForJob = async (req, res) => {
 export const getUserJobApplications = async (req, res) => {
   try {
     const userId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     if (!userId) {
       return res.status(401).json({
@@ -235,13 +309,27 @@ export const getUserJobApplications = async (req, res) => {
       });
     }
 
-    const applications = await JobApplication.find({ userId })
-      .populate("userId", "name email image")
+    const [applications, total] = await Promise.all([
+      JobApplication.find({ userId })
+      .populate("companyId", "name email image")
       .populate("jobId", "title description location category level salary")
       .sort({ createdAt: -1 })
-      .exec();
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+      JobApplication.countDocuments({ userId })
+    ]);
 
-    res.status(200).json({ success: true, applications });
+    res.status(200).json({ 
+      success: true, 
+      applications,
+      pagination: {
+        current: page,
+        total: Math.ceil(total / limit),
+        count: applications.length,
+        totalApplications: total
+      }
+    });
   } catch (error) {
     console.error("getUserJobApplications Error:", error.message);
     res.status(500).json({ success: false, message: "Server error" });

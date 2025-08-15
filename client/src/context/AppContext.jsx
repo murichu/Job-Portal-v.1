@@ -2,6 +2,36 @@ import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+// Create axios instance with default config
+const api = axios.create({
+  timeout: 10000, // 10 second timeout
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("Token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem("Token");
+      window.location.href = "/";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const AppContext = createContext(); // Create global context
 
 export const AppContextProvider = (props) => {
@@ -43,23 +73,40 @@ export const AppContextProvider = (props) => {
   /**
    * Fetches all job listings from backend
    */
-  const fetchJobs = async () => {
+  const fetchJobs = async (useCache = true) => {
+    // Simple cache mechanism
+    const cacheKey = "jobs_cache";
+    const cacheTimeKey = "jobs_cache_time";
+    const cacheExpiry = 5 * 60 * 1000; // 5 minutes
+
+    if (useCache) {
+      const cachedJobs = localStorage.getItem(cacheKey);
+      const cacheTime = localStorage.getItem(cacheTimeKey);
+      
+      if (cachedJobs && cacheTime && (Date.now() - parseInt(cacheTime)) < cacheExpiry) {
+        setJobs(JSON.parse(cachedJobs));
+        return;
+      }
+    }
+
     try {
-      const { data } = await axios.get(`${backendUrl}/api/jobs`);
+      const { data } = await api.get(`${backendUrl}/api/jobs`);
 
       if (data.success) {
         setJobs(data.jobs);
-        // console.log(data.jobs); // Debugging line (can be removed in production)
+        // Cache the jobs
+        localStorage.setItem(cacheKey, JSON.stringify(data.jobs));
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
       } else {
         toast.error(data.message || "Failed to fetch jobs.");
       }
     } catch (error) {
       console.log("fetchJobs error:", error.message);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred while fetching jobs."
-      );
+      if (!error.response || error.response.status >= 500) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to fetch jobs.");
+      }
     }
   };
 
@@ -68,32 +115,27 @@ export const AppContextProvider = (props) => {
    */
   const fetchCompanyData = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/company/company`, {
-        headers: { token: companyToken },
-      });
+      const { data } = await api.get(`${backendUrl}/api/company/company`);
 
       if (data.success) {
         setCompanyData(data.company);
-        // console.log(data);
       } else {
         toast.error(data.message || "Failed to fetch company data.");
       }
     } catch (error) {
       console.log("fetchCompanyData error:", error.message);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred while fetching company data."
-      );
+      if (!error.response || error.response.status >= 500) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to fetch company data.");
+      }
     }
   };
 
   //Function to fetch user data
   const fetchUserData = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/user/user`, {
-        headers: { token: token },
-      });
+      const { data } = await api.get(`${backendUrl}/api/user/user`);
 
       if (data.success) {
         setUserData(data.user);
@@ -102,20 +144,16 @@ export const AppContextProvider = (props) => {
       }
     } catch (error) {
       console.log("fetchUserData error:", error.message);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred while fetching user data."
-      );
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || "Failed to fetch user data.");
+      }
     }
   };
 
   //Function to fetch user applications
   const fetchUserApplications = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/user/applications`, {
-        headers: { token: token },
-      });
+      const { data } = await api.get(`${backendUrl}/api/user/applications`);
 
       if (data.success) {
         setUserApplications(data.applications);
@@ -123,6 +161,18 @@ export const AppContextProvider = (props) => {
     } catch (error) {
       console.log("fetchUserApplications error:", error.message);
     }
+  };
+
+  // Logout function
+  const logout = () => {
+    setToken(null);
+    setUserData(null);
+    setUserApplications(null);
+    localStorage.removeItem("Token");
+    // Clear jobs cache on logout
+    localStorage.removeItem("jobs_cache");
+    localStorage.removeItem("jobs_cache_time");
+    toast.success("Logged out successfully");
   };
 
   /**
@@ -186,6 +236,8 @@ export const AppContextProvider = (props) => {
     fetchUserApplications,
     showUserLogin,
     setShowUserLogin,
+    logout,
+    api, // Expose configured axios instance
   };
 
   return (

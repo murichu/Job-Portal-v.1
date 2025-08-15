@@ -8,25 +8,21 @@ import kconvert from "k-convert";
 import moment from "moment";
 import JobCard from "../components/JobCard";
 import Footer from "../components/Footer";
-import axios from "axios";
 import { toast } from "react-toastify";
-import { useAuth, useUser } from "@clerk/clerk-react";
 
 const ApplyJob = () => {
   const { id } = useParams();
-  const { jobs, backendUrl, userData } = useContext(AppContext);
+  const { jobs, backendUrl, userData, api } = useContext(AppContext);
   const [JobData, setJobData] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
-  const { getToken } = useAuth();
-  const { user } = useUser();
+  const [hasApplied, setHasApplied] = useState(false);
 
   const fetchJob = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/jobs/${id}`);
+      const { data } = await api.get(`${backendUrl}/api/jobs/${id}`);
 
       if (data.success) {
         setJobData(data.job);
-        //console.log(data.job);
       } else {
         toast.error(data.message);
       }
@@ -36,24 +32,42 @@ const ApplyJob = () => {
     }
   };
 
+  const checkApplicationStatus = async () => {
+    if (!userData) return;
+    
+    try {
+      const { data } = await api.get(`${backendUrl}/api/user/applications`);
+      if (data.success) {
+        const applied = data.applications.some(app => app.jobId._id === id);
+        setHasApplied(applied);
+      }
+    } catch (error) {
+      console.error("Error checking application status:", error);
+    }
+  };
+
   const handleApplyJob = async () => {
-    if (!user) {
+    if (!userData) {
       toast.error("Please login to apply for jobs");
+      return;
+    }
+
+    if (hasApplied) {
+      toast.info("You have already applied for this job");
       return;
     }
 
     try {
       setIsApplying(true);
-      const token = await getToken();
       
-      const { data } = await axios.post(
+      const { data } = await api.post(
         `${backendUrl}/api/users/apply`,
-        { jobId: id },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { jobId: id }
       );
 
       if (data.success) {
         toast.success(data.message);
+        setHasApplied(true);
       } else {
         toast.error(data.message);
       }
@@ -64,9 +78,16 @@ const ApplyJob = () => {
       setIsApplying(false);
     }
   };
+  
   useEffect(() => {
     fetchJob();
   }, [id]);
+
+  useEffect(() => {
+    if (JobData && userData) {
+      checkApplicationStatus();
+    }
+  }, [JobData, userData]);
 
   return JobData ? (
     <>
@@ -107,10 +128,14 @@ const ApplyJob = () => {
             <div className="flex flex-col justify-center text-end text-sm max-md:mx-auto max-md:text-center">
               <button 
                 onClick={handleApplyJob}
-                disabled={isApplying || !user}
-                className="bg-blue-600 p-2.5 px-10 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={isApplying || !userData || hasApplied}
+                className={`p-2.5 px-10 text-white rounded transition-colors ${
+                  hasApplied 
+                    ? 'bg-green-600 cursor-default' 
+                    : 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed'
+                }`}
               >
-                {isApplying ? "Applying..." : "Apply Now"}
+                {isApplying ? "Applying..." : hasApplied ? "Applied ✓" : "Apply Now"}
               </button>
               <p className="mt-2 text-gray-600 text-center">
                 Posted {moment(JobData.date).fromNow()}
@@ -127,10 +152,14 @@ const ApplyJob = () => {
               ></div>
               <button 
                 onClick={handleApplyJob}
-                disabled={isApplying || !user}
-                className="bg-blue-600 p-2.5 px-10 text-white rounded mt-10 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={isApplying || !userData || hasApplied}
+                className={`p-2.5 px-10 text-white rounded mt-10 transition-colors ${
+                  hasApplied 
+                    ? 'bg-green-600 cursor-default' 
+                    : 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed'
+                }`}
               >
-                {isApplying ? "Applying..." : "Apply Now"}
+                {isApplying ? "Applying..." : hasApplied ? "Applied ✓" : "Apply Now"}
               </button>
             </div>
 
