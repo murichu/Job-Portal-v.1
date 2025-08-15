@@ -1,16 +1,11 @@
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useAuth, useUser } from "@clerk/clerk-react";
 
 export const AppContext = createContext(); // Create global context
 
 export const AppContextProvider = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL; // Backend API base URL from environment variables
-
-  const { user } = useUser();
-
-  const { getToken } = useAuth();
 
   // State for search filters when browsing jobs
   const [searchFilter, setSearchFilter] = useState({
@@ -23,6 +18,12 @@ export const AppContextProvider = (props) => {
 
   // List of jobs fetched from the backend
   const [jobs, setJobs] = useState([]);
+
+  // Controls User login modal visibility
+  const [showUserLogin, setShowUserLogin] = useState(false);
+
+  // Token for authenticated user requests
+  const [token, setToken] = useState(null);
 
   // Controls recruiter login modal visibility
   const [showRecruiterLogin, setShowRecruiterLogin] = useState(false);
@@ -90,15 +91,8 @@ export const AppContextProvider = (props) => {
   //Function to fetch user data
   const fetchUserData = async () => {
     try {
-      const token = await getToken();
-
-      if (!token) {
-        console.log("No token available");
-        return;
-      }
-
-      const { data } = await axios.get(`${backendUrl}/api/users/user`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.get(`${backendUrl}/api/user/user`, {
+        headers: { token: token },
       });
 
       if (data.success) {
@@ -119,14 +113,8 @@ export const AppContextProvider = (props) => {
   //Function to fetch user applications
   const fetchUserApplications = async () => {
     try {
-      const token = await getToken();
-
-      if (!token) {
-        return;
-      }
-
-      const { data } = await axios.get(`${backendUrl}/api/users/applications`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.get(`${backendUrl}/api/user/applications`, {
+        headers: { token: token },
       });
 
       if (data.success) {
@@ -145,12 +133,14 @@ export const AppContextProvider = (props) => {
   useEffect(() => {
     fetchJobs();
 
-    // Retrieve the company token from localStorage
     const storedCompanyToken = localStorage.getItem("companyToken");
-
-    // If token exists, set it; otherwise, show recruiter login
     if (storedCompanyToken) {
       setCompanyToken(storedCompanyToken);
+    }
+
+    const storedUserToken = localStorage.getItem("Token");
+    if (storedUserToken) {
+      setToken(storedUserToken); // triggers another useEffect
     }
   }, []);
 
@@ -165,11 +155,11 @@ export const AppContextProvider = (props) => {
   }, [companyToken]);
 
   useEffect(() => {
-    if (user) {
+    if (token) {
       fetchUserData();
       fetchUserApplications();
     }
-  }, [user]);
+  }, [token]);
 
   // Values accessible across the app via context
   const value = {
@@ -180,6 +170,8 @@ export const AppContextProvider = (props) => {
     setIsSearched,
     jobs,
     setJobs,
+    token,
+    setToken,
     showRecruiterLogin,
     setShowRecruiterLogin,
     companyToken,
@@ -192,6 +184,8 @@ export const AppContextProvider = (props) => {
     userApplications,
     setUserApplications,
     fetchUserApplications,
+    showUserLogin,
+    setShowUserLogin,
   };
 
   return (

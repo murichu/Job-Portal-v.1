@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import ApplyJob from "./pages/ApplyJob";
 import Applications from "./pages/Applications";
 import RecruiterLogin from "./components/RecruiterLogin";
+import UserLogin from "./components/UserLogin";
 import { AppContext } from "./context/AppContext";
 import Dashboard from "./pages/Dashboard";
 import AddJob from "./pages/AddJob";
@@ -14,10 +15,12 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
-  const { showRecruiterLogin, companyToken } = useContext(AppContext);
+  const { showRecruiterLogin, companyToken, setShowUserLogin, userData } =
+    useContext(AppContext);
 
   return (
     <div>
+      {setShowUserLogin && <UserLogin />}
       {showRecruiterLogin && <RecruiterLogin />}
       {/* Toast container to show notifications */}
       <ToastContainer position="top-right" autoClose={3000} />

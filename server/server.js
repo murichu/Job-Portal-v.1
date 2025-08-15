@@ -10,10 +10,6 @@ import companyRouter from "./routes/companyRoutes.js";
 import connectCloudinary from "./config/Cloudinary.js";
 import jobRouter from "./routes/jobRoutes.js";
 import userRouter from "./routes/userRouter.js";
-import { clerkMiddleware } from "@clerk/express";
-
-//import { serve } from "inngest/express";
-//import { inngest, functions } from "./inngest/index.js"
 
 // Load environment variables
 dotenv.config();
@@ -36,24 +32,16 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use(clerkMiddleware());
 
 // Basic route
 app.get("/", (req, res) => {
   res.send("API is working!");
 });
 
-// Webhook endpoint
-// Instead of app.use(express.json()) for this route
-app.post("/api/webhooks", express.raw({ type: "application/json" }), clerkWebhooks);
-
 // User API routes
-app.use("/api/users", userRouter);
+app.use("/api/user", userRouter);
 app.use("/api/company", companyRouter);
 app.use("/api/jobs", jobRouter);
-
-// Inngest (optional)
-// app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // Debug route for Sentry
 app.get("/debug-sentry", (req, res) => {

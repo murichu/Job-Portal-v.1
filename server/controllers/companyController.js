@@ -253,7 +253,6 @@ export const getCompanyPostedJobs = async (req, res) => {
 
     // Send response with jobs
     return res.json({ success: true, jobsData });
-  
   } catch (error) {
     // Handle unexpected server errors
     console.error("getCompanyPostedJobs error:", error);

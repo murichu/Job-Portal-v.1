@@ -1,30 +1,41 @@
 import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-const userAuth = async (req, res, next) => {
-  const { token } = req.cookies;
+// Middleware to protect routes by verifying the token and attaching the user to the request
+export const protectUser = async (req, res, next) => {
+  const token = req.headers.token;
 
+  // If no token is provided, deny access
   if (!token) {
     return res
       .status(401)
-      .json({ success: false, message: "Not Authorized. Login Again" });
+      .json({ success: false, message: "Not Authorized, Login again" });
   }
 
   try {
-    const tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify token using the secret key
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (tokenDecode.id) {
-      //req.userId = tokenDecode.id; // ✅ better than putting it in req.body
-      req.body.userId = tokenDecode.id;
-    } else {
+    // Find user by decoded token ID and exclude the password field
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
       return res
-        .status(403)
-        .json({ success: false, message: "Not Authorized. Login Again" });
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    next();
+    // Attach user info to the request for use in next handlers
+    req.user = user;
+
+    next(); // Proceed to next middleware or route handler
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("protectUser error:", error);
+
+    // Invalid or expired token
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token. Please login again.",
+    });
   }
 };
-
-export default userAuth;
