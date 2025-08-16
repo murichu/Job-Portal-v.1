@@ -24,6 +24,34 @@ const UserLogin = () => {
   const { setShowUserLogin, backendUrl, setToken, setUserData } =
     useContext(AppContext);
 
+  // Form validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (formType === "Sign Up") {
+      if (!formData.name.trim()) {
+        newErrors.name = "Name is required";
+      } else if (formData.name.trim().length < 2) {
+        newErrors.name = "Name must be at least 2 characters";
+      }
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Memoized input change handler
   const handleInputChange = useCallback(
     (field, value) => {

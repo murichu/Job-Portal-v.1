@@ -42,11 +42,11 @@ const Navbar = () => {
               <div className="max-sm:hidden">
                 <p className="text-sm font-medium">Hi, {userData.name}</p>
               </div>
-              <div className="relative group">
+              <div className="relative group z-50">
                 <button className="text-gray-500 hover:text-gray-700 ml-2">
                   ⋮
                 </button>
-                <div className="absolute right-0 top-8 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[120px] z-10">
+                <div className="absolute right-0 top-8 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[120px] z-50">
                   <Link 
                     to="/applications" 
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

@@ -11,12 +11,15 @@ import {
 } from "../controllers/companyController.js";
 import upload, { handleUploadError } from "../config/multer.js";
 import { protectCompany } from "../middleware/AuthMiddleware.js";
+import { validateRequest } from "../middleware/validation.js";
+import { companyRegistrationSchema, jobPostingSchema, applicationStatusSchema } from "../utils/validation.js";
 
 const companyRouter = express.Router();
 
 // Register a Company
 companyRouter.post(
   "/register",
+  validateRequest(companyRegistrationSchema),
   upload.single("image"),
   handleUploadError,
   registerCompany
@@ -29,10 +32,10 @@ companyRouter.post("/login", loginCompany);
 companyRouter.get("/company", protectCompany, getCompanyData);
 
 // Post a new job
-companyRouter.post("/post-job", protectCompany, postJob);
+companyRouter.post("/post-job", protectCompany, validateRequest(jobPostingSchema), postJob);
 
 // Get applicants for a company's jobs
-companyRouter.get("/applicants", protectCompany, getCompanyJobApplicants);
+companyRouter.get("/applications", protectCompany, getCompanyJobApplicants);
 
 // List all jobs posted by the company
 companyRouter.get("/list-jobs", protectCompany, getCompanyPostedJobs);
@@ -41,6 +44,7 @@ companyRouter.get("/list-jobs", protectCompany, getCompanyPostedJobs);
 companyRouter.post(
   "/change-status",
   protectCompany,
+  validateRequest(applicationStatusSchema),
   ChangeJobApplicationStatus
 );
 

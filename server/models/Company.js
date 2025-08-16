@@ -10,6 +10,8 @@ const companySchema = new mongoose.Schema(
     recruiterPosition: { type: String, required: true },
     companyPhone: { type: String, required: true },
     companyLocation: { type: String, required: true },
+    isVerified: { type: Boolean, default: false },
+    lastLogin: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

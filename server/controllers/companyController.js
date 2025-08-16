@@ -5,6 +5,7 @@ import generateToken from "../utils/generateToken.js";
 import validator from "validator";
 import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
+import mongoose from "mongoose";
 
 // Register a company
 // Handles creating a new company account with provided details such as name, email, password, etc.
@@ -278,7 +279,42 @@ export const postJob = async (req, res) => {
 
 // Get company job applicants
 // Fetches a list of applicants who have applied to the company's job postings
-export const getCompanyJobApplicants = async (req, res) => {};
+export const getCompanyJobApplicants = async (req, res) => {
+  try {
+    const companyId = req.company._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [applications, total] = await Promise.all([
+      JobApplication.find({ companyId })
+        .populate('userId', 'name email image resume')
+        .populate('jobId', 'title location')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      JobApplication.countDocuments({ companyId })
+    ]);
+
+    res.json({
+      success: true,
+      applications,
+      pagination: {
+        current: page,
+        total: Math.ceil(total / limit),
+        count: applications.length,
+        totalApplications: total,
+      }
+    });
+  } catch (error) {
+    console.error('getCompanyJobApplicants error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error.',
+    });
+  }
+};
 
 // Get company posted jobs
 // Retrieves all jobs that the company has posted so far
@@ -323,7 +359,62 @@ export const getCompanyPostedJobs = async (req, res) => {
 
 // Change job application status
 // Updates the status of a job application (e.g., pending → accepted/rejected) for a specific applicant
-export const ChangeJobApplicationStatus = async (req, res) => {};
+export const ChangeJobApplicationStatus = async (req, res) => {
+  try {
+    const { applicationId, status } = req.body;
+    const companyId = req.company._id;
+
+    // Validate input
+    if (!applicationId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Application ID and status are required.',
+      });
+    }
+
+    if (!['Pending', 'Accepted', 'Rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be Pending, Accepted, or Rejected.',
+      });
+    }
+
+    // Validate application ID format
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid application ID format.',
+      });
+    }
+
+    // Find and update the application
+    const application = await JobApplication.findOneAndUpdate(
+      { _id: applicationId, companyId },
+      { status },
+      { new: true }
+    ).populate('userId', 'name email')
+     .populate('jobId', 'title');
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found or you are not authorized to update it.',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Application ${status.toLowerCase()} successfully.`,
+      application,
+    });
+  } catch (error) {
+    console.error('ChangeJobApplicationStatus error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error.',
+    });
+  }
+};
 
 // Change job visibility
 // Toggles the visibility of a job posting (e.g., make a job visible or hidden from job seekers)
@@ -331,6 +422,14 @@ export const ChangeJobVisibility = async (req, res) => {
   try {
     // Extract the job ID from the request body
     const { id } = req.body;
+
+    // Validate job ID format
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid job ID is required.",
+      });
+    }
 
     // Get the authenticated company's ID from the request (assumed set by auth middleware)
     const companyId = req.company._id;

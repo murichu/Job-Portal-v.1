@@ -1,4 +1,5 @@
 import Job from "../models/Job.js"; // Import the Job model
+import mongoose from "mongoose";
 
 // Controller: Get all visible jobs
 export const getJobs = async (req, res) => {
@@ -31,6 +32,14 @@ export const getJobById = async (req, res) => {
   try {
     const { id } = req.params; // Extract job ID from request parameters
 
+    // Validate job ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid job ID format" 
+      });
+    }
+
     // Find the job by ID and populate company data (excluding password)
     const job = await Job.findById(id).populate({
       path: "companyId",
@@ -39,7 +48,7 @@ export const getJobById = async (req, res) => {
 
     // If job not found, return a not-found response
     if (!job) {
-      return res.json({ success: false, message: "Job not found" });
+      return res.status(404).json({ success: false, message: "Job not found" });
     }
 
     // Return the found job as JSON

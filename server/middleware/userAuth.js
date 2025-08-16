@@ -5,13 +5,17 @@ import rateLimit from "express-rate-limit";
 // Rate limiting middleware for protected routes
 export const protectedRouteRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs for protected routes
+  max: 200, // Increased limit for better user experience
   message: {
     success: false,
     message: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/health' || req.path === '/';
+  }
 });
 
 // Middleware to protect routes by verifying the token and attaching the user to the request

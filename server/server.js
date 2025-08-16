@@ -24,9 +24,13 @@ app.set("trust proxy", false);
 // ✅ Apply rate limiter before routes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP
+  max: 100, // Increased limit for general API usage
   standardHeaders: true,
   legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again later."
+  }
 });
 
 app.use(limiter);
@@ -57,7 +61,21 @@ app.get("/debug-sentry", (req, res) => {
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("API is working!");
+  res.json({ 
+    success: true, 
+    message: "Job Portal API is running!",
+    version: "1.0.0",
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ 
+    success: true, 
+    status: "healthy",
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 404 fallback

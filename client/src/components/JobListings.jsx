@@ -160,7 +160,7 @@ const JobListings = () => {
           {filteredJobs
             .slice((currentPage - 1) * 6, currentPage * 6)
             .map((job) => {
-              const hasApplied = userApplications.includes(job._id);
+              const hasApplied = userApplications && userApplications.includes(job._id);
               return <JobCard key={job._id} job={job} hasApplied={hasApplied} />;
             })}
         </div>

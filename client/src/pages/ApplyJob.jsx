@@ -28,9 +28,12 @@ const ApplyJob = () => {
         setJobData(data.job);
       } else {
         toast.error(data.message);
+        navigate('/'); // Redirect to home if job not found
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error('Error fetching job:', error);
+      toast.error(error.response?.data?.message || 'Failed to load job details');
+      navigate('/'); // Redirect to home on error
     }
   };
 
@@ -156,7 +159,9 @@ const ApplyJob = () => {
               <h2 className="font-bold text-2xl mb-4">Job Description</h2>
               <div
                 className="rich-text"
-                dangerouslySetInnerHTML={{ __html: JobData.description }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(JobData.description) 
+                }}
               ></div>
 
               {/* Apply / Applied */}

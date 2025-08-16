@@ -10,20 +10,20 @@ const Hero = () => {
   const locationRef = useRef(null)
 
   const onSearch = () => {
+    const title = titleRef.current.value.trim();
+    const location = locationRef.current.value.trim();
+    
     setSearchFilter ({
-      title: titleRef.current.value,
-      location: locationRef.current.value
+      title,
+      location
     })
     setIsSearched(true)
-    console.log({
-      title: titleRef.current.value,
-      location: locationRef.current.value
-    });
 
-    // Clear the input fields after search
-    //titleRef.current.value = '';
-    //locationRef.current.value = '';
-    
+    // Scroll to job listings
+    const jobListElement = document.getElementById('job-list');
+    if (jobListElement) {
+      jobListElement.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   return (

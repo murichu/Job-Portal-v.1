@@ -1,15 +1,29 @@
 import React from "react";
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
+import DOMPurify from 'dompurify';
 
 const JobCard = ({ job, hasApplied }) => {
   const navigate = useNavigate();
 
+  // Safely access nested company data
+  const companyImage = job.companyId?.image || job.company?.image || '/default-company.png';
+  const companyName = job.companyId?.name || job.company?.name || 'Unknown Company';
+
+  // Sanitize HTML content
+  const sanitizedDescription = DOMPurify.sanitize(job.description || '');
   return (
     <div className="border p-6 shadow rounded">
       {/* Company Icon */}
       <div className="flex justify-between items-center">
-        <img className="h-8" src={job.company.image} alt="Company Icon" />
+        <img 
+          className="h-8" 
+          src={companyImage} 
+          alt={`${companyName} Icon`}
+          onError={(e) => {
+            e.target.src = '/default-company.png';
+          }}
+        />
       </div>
 
       {/* Job Title */}
@@ -29,7 +43,7 @@ const JobCard = ({ job, hasApplied }) => {
       <p
         className="text-gray-500 text-sm mt-4"
         dangerouslySetInnerHTML={{
-          __html: job.description.slice(0, 150) + "...",
+          __html: sanitizedDescription.slice(0, 150) + "...",
         }}
       ></p>
 

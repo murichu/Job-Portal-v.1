@@ -28,6 +28,18 @@ const Applications = () => {
       return;
     }
 
+    // Validate file type
+    if (resume.type !== "application/pdf") {
+      toast.error("Please select a PDF file");
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (resume.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
     try {
       setIsUploading(true);
 

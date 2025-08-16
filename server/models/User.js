@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false // Don't include password in queries by default
     },
+    emailVerified: {
+      type: Boolean,
+      default: false
+    },
     lastLogin: { 
       type: Date, 
       default: Date.now 

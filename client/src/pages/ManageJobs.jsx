@@ -41,14 +41,10 @@ const ManageJobs = () => {
 
   // Function to change job visibility
   const changeJobVisibility = async (jobId) => {
+    if (updatingId) return; // Prevent multiple simultaneous updates
+    
     setUpdatingId(jobId);
 
-    // Optimistic UI update
-    setJobs((prev) =>
-      prev.map((job) =>
-        job._id === jobId ? { ...job, visible: !job.visible } : job
-      )
-    );
 
     try {
       const { data } = await axios.post(
@@ -59,8 +55,13 @@ const ManageJobs = () => {
 
       if (data.success) {
         toast.success(data.message);
-        
-      }else {
+        // Update UI after successful API call
+        setJobs((prev) =>
+          prev.map((job) =>
+            job._id === jobId ? { ...job, visible: !job.visible } : job
+          )
+        );
+      } else {
         toast.error(data.message || "Failed to change visibility");
       }
     } catch (error) {

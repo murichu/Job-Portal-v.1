@@ -32,6 +32,26 @@ const AddJob = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!title.trim()) {
+      return toast.error("Job title is required");
+    }
+    
+    if (location === "Select Location") {
+      return toast.error("Please select a location");
+    }
+    
+    if (category === "Select Category") {
+      return toast.error("Please select a category");
+    }
+    
+    if (level === "Select Level") {
+      return toast.error("Please select a level");
+    }
+    
+    if (!salary || salary <= 0) {
+      return toast.error("Please enter a valid salary");
+    }
     const description = quillRef.current.root.innerHTML.trim();
 
     if (!description || description === "<p><br></p>") {

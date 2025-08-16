@@ -10,6 +10,8 @@ import {
 } from "../controllers/userController.js";
 import upload, { handleUploadError } from "../config/multer.js";
 import { protectUser, protectedRouteRateLimit, optionalAuth } from "../middleware/userAuth.js";
+import { validateRequest } from "../middleware/validation.js";
+import { userRegistrationSchema, userLoginSchema, jobApplicationSchema } from "../utils/validation.js";
 
 const userRouter = express.Router();
 
@@ -17,13 +19,14 @@ const userRouter = express.Router();
 userRouter.post(
   "/register",
   authRateLimit, // Apply rate limiting to registration
+  validateRequest(userRegistrationSchema),
   upload.single("image"),
   handleUploadError,
   registerUser
 );
 
 // User login
-userRouter.post("/login", authRateLimit, loginUser); // Apply rate limiting to login
+userRouter.post("/login", authRateLimit, validateRequest(userLoginSchema), loginUser);
 
 // @route   GET /user
 // @desc    Get authenticated user's profile data
@@ -33,7 +36,7 @@ userRouter.get("/user", protectedRouteRateLimit, protectUser, getUserData);
 // @route   POST /apply
 // @desc    Apply for a job
 // @access  Private
-userRouter.post("/apply", protectedRouteRateLimit, protectUser, applyForJob);
+userRouter.post("/apply", protectedRouteRateLimit, protectUser, validateRequest(jobApplicationSchema), applyForJob);
 
 // @route   GET /applications
 // @desc    Get all jobs the user has applied to

@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { v2 as cloudinary } from "cloudinary";
 import rateLimit from "express-rate-limit";
+import mongoose from "mongoose";
 
 // Rate limiting for auth endpoints
 export const authRateLimit = rateLimit({
@@ -183,8 +184,13 @@ export const loginUser = async (req, res) => {
     }
 
     // Update last login time
-    user.lastLogin = new Date();
-    await user.save();
+    try {
+      user.lastLogin = new Date();
+      await user.save();
+    } catch (saveError) {
+      // Log but don't fail login for this
+      console.error("Failed to update last login:", saveError);
+    }
 
     // If authentication is successful, return user details and a JWT token
     res.json({
@@ -241,6 +247,14 @@ export const applyForJob = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Job ID is required",
+      });
+    }
+
+    // Validate jobId format
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid job ID format",
       });
     }
 

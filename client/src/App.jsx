@@ -13,37 +13,50 @@ import ViewApplications from "./pages/ViewApplications";
 import "quill/dist/quill.snow.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const App = () => {
   const { showRecruiterLogin, showUserLogin, companyToken, userData } =
     useContext(AppContext);
 
   return (
-    <div>
-      {showUserLogin && <UserLogin />}
-      {showRecruiterLogin && <RecruiterLogin />}
-      {/* Toast container to show notifications */}
-      <ToastContainer position="top-right" autoClose={3000} />
+    <ErrorBoundary>
+      <div>
+        {showUserLogin && <UserLogin />}
+        {showRecruiterLogin && <RecruiterLogin />}
+        {/* Toast container to show notifications */}
+        <ToastContainer 
+          position="top-right" 
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/apply-job/:id" element={<ApplyJob />} />
-        <Route path="/applications" element={<Applications />} />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/apply-job/:id" element={<ApplyJob />} />
+          <Route path="/applications" element={<Applications />} />
 
-        {/* Parent route for the Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />}>
-          {/* Nested routes under /dashboard */}
+          {/* Parent route for the Dashboard */}
+          <Route path="/dashboard" element={<Dashboard />}>
+            {/* Nested routes under /dashboard */}
 
-          {companyToken ? (
-            <>
-              <Route path="add-job" element={<AddJob />} />
-              <Route path="manage-jobs" element={<ManageJobs />} />
-              <Route path="view-applications" element={<ViewApplications />} />
-            </>
-          ) : null}
-        </Route>
-      </Routes>
-    </div>
+            {companyToken ? (
+              <>
+                <Route path="add-job" element={<AddJob />} />
+                <Route path="manage-jobs" element={<ManageJobs />} />
+                <Route path="view-applications" element={<ViewApplications />} />
+              </>
+            ) : null}
+          </Route>
+        </Routes>
+      </div>
+    </ErrorBoundary>
   );
 };
 
