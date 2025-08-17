@@ -5,15 +5,22 @@ import dotenv from "dotenv";
 import * as Sentry from "@sentry/node";
 import connectDB from "./config/mongoDB.js";
 import cookieParser from "cookie-parser";
-//import { clerkWebhooks } from "./controllers/webhooks.js";
 import companyRouter from "./routes/companyRoutes.js";
 import connectCloudinary from "./config/Cloudinary.js";
 import jobRouter from "./routes/jobRoutes.js";
 import userRouter from "./routes/userRouter.js";
 import rateLimit from "express-rate-limit";
+import { 
+  globalErrorHandler, 
+  handleUnhandledRejection, 
+  handleUncaughtException 
+} from "./middleware/errorHandler.js";
 
 // Load environment variables
 dotenv.config();
+
+// Handle uncaught exceptions
+handleUncaughtException();
 
 // Initialize express
 const app = express();
@@ -24,9 +31,13 @@ app.set("trust proxy", 1);
 // ✅ Apply rate limiter before routes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP
+  max: 100, // limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again later."
+  }
 });
 
 app.use(limiter);
@@ -38,7 +49,7 @@ await connectCloudinary();
 // General middleware
 app.use(
   cors({
-    origin: "https://gkx6ml-5173.csb.app", // Adjust to your frontend URL
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -57,19 +68,42 @@ app.get("/debug-sentry", (req, res) => {
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("API is working!");
+  res.json({ 
+    success: true, 
+    message: "Job Portal API is running!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // 404 fallback
 app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
+  res.status(404).json({ 
+    success: false, 
+    message: "Route not found",
+    path: req.originalUrl 
+  });
 });
+
+// Global error handler
+app.use(globalErrorHandler);
 
 // Sentry error handler (last)
 Sentry.setupExpressErrorHandler(app);
 
+// Handle unhandled promise rejections
+handleUnhandledRejection();
+
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM RECEIVED. Shutting down gracefully');
+  server.close(() => {
+    console.log('💥 Process terminated!');
+  });
 });

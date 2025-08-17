@@ -5,9 +5,13 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
+import { useFormSubmit } from "../hooks/useApi";
+import { validateForm } from "../utils/errorHandler";
+import LoadingSpinner from "./LoadingSpinner";
 
 const UserLogin = () => {
   const navigate = useNavigate();
+  const { isSubmitting, submit } = useFormSubmit();
 
   // Form state
   const [formType, setFormType] = useState("Login");
@@ -19,13 +23,31 @@ const UserLogin = () => {
   const [image, setImage] = useState(null);
   const [isTextDataSubmitted, setIsTextDataSubmitted] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
 
   const { setShowUserLogin, backendUrl, setToken, setUserData } =
     useContext(AppContext);
 
+  // Form validation rules
+  const validationRules = {
+    name: {
+      required: formType === "Sign Up",
+      minLength: 2,
+      maxLength: 50
+    },
+    email: {
+      required: true,
+      pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: "Please enter a valid email address"
+    },
+    password: {
+      required: true,
+      minLength: 8,
+      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      message: "Password must contain at least 8 characters with uppercase, lowercase, number, and special character"
+    }
+  };
   // Memoized input change handler
   const handleInputChange = useCallback(
     (field, value) => {
@@ -77,13 +99,17 @@ const UserLogin = () => {
 
     // For Sign Up: first submit text data, then ask for image upload
     if (formType === "Sign Up" && !isTextDataSubmitted) {
+      // Validate form data
+      const validation = validateForm(formData, validationRules);
+      if (!validation.isValid) {
+        setErrors(validation.errors);
+        return;
+      }
       setIsTextDataSubmitted(true);
       return;
     }
 
-    setIsLoading(true);
-
-    try {
+    await submit(async () => {
       if (formType === "Login") {
         const { data } = await axios.post(`${backendUrl}/api/user/login`, {
           email: formData.email,
@@ -119,15 +145,7 @@ const UserLogin = () => {
           toast.error(data.message);
         }
       }
-    } catch (error) {
-      console.error("User login error", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   // Reset form when switching between login/signup
@@ -191,7 +209,7 @@ const UserLogin = () => {
                   className="sr-only"
                   accept="image/*"
                   onChange={(e) => setImage(e.target.files[0])}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 />
               </label>
               <p className="text-sm text-gray-600">Upload Profile Picture</p>
@@ -217,7 +235,7 @@ const UserLogin = () => {
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     type="text"
                     placeholder="Full Name"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
@@ -241,7 +259,7 @@ const UserLogin = () => {
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   type="email"
                   placeholder="Email Address"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
                 />
               </div>
@@ -266,7 +284,7 @@ const UserLogin = () => {
                   }
                   type={showPassword ? "text" : "password"} // Toggle input type
                   placeholder="Password"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
                 />
                 {/* Eye icon for password visibility toggle */}
@@ -294,7 +312,7 @@ const UserLogin = () => {
             <button
               type="button"
               className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               Forgot password?
             </button>
@@ -304,18 +322,19 @@ const UserLogin = () => {
         {/* Submit button */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isSubmitting}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-lg mt-6 font-medium transition-colors flex items-center justify-center"
         >
-          {isLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              {formType === "Login"
+          {isSubmitting ? (
+            <LoadingSpinner 
+              size="sm" 
+              color="white" 
+              text={formType === "Login"
                 ? "Signing in..."
                 : isTextDataSubmitted
                 ? "Creating Account..."
                 : "Processing..."}
-            </>
+            />
           ) : formType === "Login" ? (
             "Sign In"
           ) : isTextDataSubmitted ? (
@@ -335,7 +354,7 @@ const UserLogin = () => {
                   type="button"
                   className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   onClick={() => handleFormTypeChange("Sign Up")}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Sign Up
                 </button>
@@ -347,7 +366,7 @@ const UserLogin = () => {
                   type="button"
                   className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   onClick={() => handleFormTypeChange("Login")}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Sign In
                 </button>

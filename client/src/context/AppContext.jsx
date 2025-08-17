@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { handleError } from "../utils/errorHandler";
 
 // Create axios instance with default config
 const api = axios.create({
@@ -27,11 +28,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("Token");
-      localStorage.removeItem("companyToken");
-      window.location.href = "/";
-    }
+    // Let the error handler deal with auth errors
+    handleError(error);
     return Promise.reject(error);
   }
 );
@@ -53,6 +51,8 @@ export const AppContextProvider = (props) => {
   // List of jobs fetched from the backend
   const [jobs, setJobs] = useState([]);
 
+  // Loading state for jobs
+  const [jobsLoading, setJobsLoading] = useState(false);
   // Controls User login modal visibility
   const [showUserLogin, setShowUserLogin] = useState(false);
 
@@ -97,25 +97,22 @@ export const AppContextProvider = (props) => {
       }
     }
 
+    setJobsLoading(true);
     try {
       const { data } = await api.get(`${backendUrl}/api/jobs`);
 
       if (data.success) {
         setJobs(data.jobs);
-        //console.log(data.jobs);
         // Cache the jobs
         localStorage.setItem(cacheKey, JSON.stringify(data.jobs));
         localStorage.setItem(cacheTimeKey, Date.now().toString());
       } else {
-        toast.error(data.message || "Failed to fetch jobs.");
+        handleError({ response: { data } });
       }
     } catch (error) {
-      console.log("fetchJobs error:", error.message);
-      if (!error.response || error.response.status >= 500) {
-        toast.error("Network error. Please check your connection.");
-      } else {
-        toast.error(error.response?.data?.message || "Failed to fetch jobs.");
-      }
+      handleError(error, "Failed to fetch jobs");
+    } finally {
+      setJobsLoading(false);
     }
   };
 
@@ -129,27 +126,11 @@ export const AppContextProvider = (props) => {
       // Check if data.success is true before proceeding
       if (data?.success) {
         setCompanyData(data.company);
-        // Optional: Uncomment if you want to log the company data
-        //console.log(data.company);
       } else {
-        // If success is false, show the appropriate message
-        toast.error(data?.message || "Failed to fetch company data.");
+        handleError({ response: { data } });
       }
     } catch (error) {
-      console.log("fetchCompanyData error:", error.message);
-
-      // Check if it's a network error (no response or status 500+)
-      if (!error.response) {
-        toast.error("Network error. Please check your connection.");
-      } else if (error.response.status >= 500) {
-        // Server-side errors (e.g., 500, 502, etc.)
-        toast.error("Server error. Please try again later.");
-      } else {
-        // Any other errors (like 400, 404, etc.)
-        toast.error(
-          error.response?.data?.message || "Failed to fetch company data."
-        );
-      }
+      handleError(error, "Failed to fetch company data");
     }
   };
 
@@ -161,14 +142,12 @@ export const AppContextProvider = (props) => {
       if (data.success) {
         setUserData(data.user);
       } else {
-        toast.error(data.message || "Failed to fetch user data.");
+        handleError({ response: { data } });
       }
     } catch (error) {
-      console.log("fetchUserData error:", error.message);
+      // Don't show error for 401 (handled by interceptor)
       if (error.response?.status !== 401) {
-        toast.error(
-          error.response?.data?.message || "Failed to fetch user data."
-        );
+        handleError(error, "Failed to fetch user data");
       }
     }
   };
@@ -180,9 +159,11 @@ export const AppContextProvider = (props) => {
 
       if (data.success) {
         setUserApplications(data.applications);
-        //console.log(data.applications);
+      } else {
+        handleError({ response: { data } });
       }
     } catch (error) {
+      // Silently fail for applications fetch
       console.log("fetchUserApplications error:", error.message);
     }
   };
@@ -244,6 +225,7 @@ export const AppContextProvider = (props) => {
     setIsSearched,
     jobs,
     setJobs,
+    jobsLoading,
     token,
     setToken,
     showRecruiterLogin,

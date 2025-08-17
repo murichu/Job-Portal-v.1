@@ -2,10 +2,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { assets, JobCategories, JobLocations } from "../assets/assets";
 import JobCard from "../components/JobCard";
+import LoadingSpinner from "./LoadingSpinner";
+import { useApi } from "../hooks/useApi";
 
 const JobListings = () => {
-  const { isSearched, searchFilter, setSearchFilter, jobs, userData, api, backendUrl } =
+  const { isSearched, searchFilter, setSearchFilter, jobs, userData, backendUrl } =
     useContext(AppContext);
+  const { loading: applicationsLoading, execute } = useApi();
 
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,14 +27,27 @@ const JobListings = () => {
   // Fetch user's applied jobs
   const fetchUserApplications = async () => {
     if (!userData) return;
-    try {
-      const { data } = await api.get(`${backendUrl}/api/user/applications`);
+    
+    await execute(async () => {
+      const response = await fetch(`${backendUrl}/api/user/applications`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('Token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch applications');
+      }
+      
+      const data = await response.json();
       if (data.success) {
         setUserApplications(data.applications.map((app) => app.jobId._id));
       }
-    } catch (error) {
-      console.error("Error fetching user applications:", error);
-    }
+      return data;
+    }, {
+      showErrorToast: false // Don't show error toast for this background operation
+    });
   };
 
   // Filter jobs
@@ -67,6 +83,17 @@ const JobListings = () => {
     fetchUserApplications();
   }, [userData]);
 
+  if (jobs.length === 0) {
+    return (
+      <div className="container 2xl:px-20 mx-auto py-8">
+        <LoadingSpinner 
+          size="lg" 
+          text="Loading jobs..." 
+          className="py-20"
+        />
+      </div>
+    );
+  }
   return (
     <div className="container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-8">
       
@@ -156,6 +183,11 @@ const JobListings = () => {
             : "Get your desired job from top companies."}
         </p>
 
+        {applicationsLoading && (
+          <div className="mb-4">
+            <LoadingSpinner size="sm" text="Loading your applications..." />
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredJobs
             .slice((currentPage - 1) * 6, currentPage * 6)
@@ -171,6 +203,7 @@ const JobListings = () => {
             <button
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <img src={assets.left_arrow_icon} alt="Previous Page" />
             </button>
@@ -193,6 +226,7 @@ const JobListings = () => {
                 setCurrentPage((p) => Math.min(p + 1, Math.ceil(filteredJobs.length / 6)))
               }
               disabled={currentPage === Math.ceil(filteredJobs.length / 6)}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <img src={assets.right_arrow_icon} alt="Next Page" />
             </button>
