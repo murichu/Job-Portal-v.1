@@ -59,7 +59,12 @@ const RecruiterLogin = () => {
           password,
         });
 
-        data.success ? handleAuthSuccess(data) : toast.error(data.message);
+        if (data.success) {
+          handleAuthSuccess(data);
+          navigate("/dashboard");
+        } else {
+          toast.error(data.message);
+        }
       } else {
         const formPayload = new FormData();
         formPayload.append("name", name);
@@ -77,7 +82,12 @@ const RecruiterLogin = () => {
           { headers: { "Content-Type": "multipart/form-data" } }
         );
 
-        data.success ? handleAuthSuccess(data) : toast.error(data.message);
+        if (data.success) {
+          handleAuthSuccess(data);
+          navigate("/");
+        } else {
+          toast.error(data.message);
+        }
       }
     } catch (error) {
       console.error("Recruiter login error", error.message);

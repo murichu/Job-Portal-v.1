@@ -19,7 +19,7 @@ dotenv.config();
 const app = express();
 
 // ✅ Trust proxy to fix X-Forwarded-For error with express-rate-limit
-app.set("trust proxy", false);
+app.set("trust proxy", 1);
 
 // ✅ Apply rate limiter before routes
 const limiter = rateLimit({
@@ -38,7 +38,7 @@ await connectCloudinary();
 // General middleware
 app.use(
   cors({
-    origin: "https://jfj697-5173.csb.app", // Adjust to your frontend URL
+    origin: "https://gkx6ml-5173.csb.app", // Adjust to your frontend URL
     credentials: true,
   })
 );

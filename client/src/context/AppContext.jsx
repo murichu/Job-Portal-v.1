@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -102,6 +102,7 @@ export const AppContextProvider = (props) => {
 
       if (data.success) {
         setJobs(data.jobs);
+        //console.log(data.jobs);
         // Cache the jobs
         localStorage.setItem(cacheKey, JSON.stringify(data.jobs));
         localStorage.setItem(cacheTimeKey, Date.now().toString());
@@ -125,17 +126,26 @@ export const AppContextProvider = (props) => {
     try {
       const { data } = await api.get(`${backendUrl}/api/company/company`);
 
-      if (data.success) {
+      // Check if data.success is true before proceeding
+      if (data?.success) {
         setCompanyData(data.company);
-        console.log(data.company);
+        // Optional: Uncomment if you want to log the company data
+        //console.log(data.company);
       } else {
-        toast.error(data.message || "Failed to fetch company data.");
+        // If success is false, show the appropriate message
+        toast.error(data?.message || "Failed to fetch company data.");
       }
     } catch (error) {
       console.log("fetchCompanyData error:", error.message);
-      if (!error.response || error.response.status >= 500) {
+
+      // Check if it's a network error (no response or status 500+)
+      if (!error.response) {
         toast.error("Network error. Please check your connection.");
+      } else if (error.response.status >= 500) {
+        // Server-side errors (e.g., 500, 502, etc.)
+        toast.error("Server error. Please try again later.");
       } else {
+        // Any other errors (like 400, 404, etc.)
         toast.error(
           error.response?.data?.message || "Failed to fetch company data."
         );
@@ -170,6 +180,7 @@ export const AppContextProvider = (props) => {
 
       if (data.success) {
         setUserApplications(data.applications);
+        //console.log(data.applications);
       }
     } catch (error) {
       console.log("fetchUserApplications error:", error.message);

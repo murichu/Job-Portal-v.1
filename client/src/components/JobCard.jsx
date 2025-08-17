@@ -9,7 +9,7 @@ const JobCard = ({ job, hasApplied }) => {
     <div className="border p-6 shadow rounded">
       {/* Company Icon */}
       <div className="flex justify-between items-center">
-        <img className="h-8" src={job.company.image} alt="Company Icon" />
+        <img className="h-8" src={job.companyId?.image} alt="Company Icon" />
       </div>
 
       {/* Job Title */}
@@ -36,10 +36,7 @@ const JobCard = ({ job, hasApplied }) => {
       {/* Apply / Applied and Learn More Buttons */}
       <div className="mt-4 flex gap-4 text-sm">
         {hasApplied ? (
-          <button
-            disabled
-            className="bg-green-600 text-white px-4 py-2 rounded cursor-default"
-          >
+          <button className="bg-green-600 text-white px-4 py-2 rounded cursor-default">
             Applied ✓
           </button>
         ) : (

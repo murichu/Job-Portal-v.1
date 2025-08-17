@@ -41,13 +41,13 @@ const ApplyJob = () => {
       const { data } = await api.get(`${backendUrl}/api/user/applications`);
       if (data.success) {
         setUserApplications(data.applications);
-        const applied = data.applications.some(
-          (app) => app.jobId._id === id
-        );
+        const applied = data.applications.some((app) => app.jobId._id === id);
         setHasApplied(applied);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to fetch applications");
+      toast.error(
+        error.response?.data?.message || "Failed to fetch applications"
+      );
     }
   };
 
@@ -91,7 +91,12 @@ const ApplyJob = () => {
     }
   }, [userData]);
 
-  return JobData ? (
+  // Return loading state if JobData is not available
+  if (!JobData) {
+    return <Loading />;
+  }
+
+  return (
     <>
       <Navbar />
       <div className="min-h-screen flex flex-col py-10 container px-4 2xl:px-20 mx-auto">
@@ -101,8 +106,8 @@ const ApplyJob = () => {
             <div className="flex flex-col md:flex-row items-center">
               <img
                 className="h-24 bg-white rounded-lg p-4 mr-4 max-md:mb-4 border"
-                src={JobData.companyId.image}
-                alt={JobData.companyId.name}
+                src={JobData.companyId?.image || "default-image-path.jpg"}
+                alt={JobData.companyId?.name || "Unknown Company"}
               />
               <div className="text-center md:text-left text-neutral-700">
                 <h1 className="text-2xl sm:text-4xl font-medium">
@@ -111,7 +116,7 @@ const ApplyJob = () => {
                 <div className="flex flex-row flex-wrap max-md:justify-center gap-y-2 gap-6 items-center text-gray-600 mt-2">
                   <span className="flex items-center gap-1">
                     <img src={assets.suitcase_icon} alt="" />
-                    {JobData.companyId.name}
+                    {JobData.companyId?.name || "This Company"}
                   </span>
                   <span className="flex items-center gap-1">
                     <img src={assets.location_icon} alt="" />
@@ -162,10 +167,7 @@ const ApplyJob = () => {
               {/* Apply / Applied */}
               <div className="mt-4 flex gap-4 text-sm">
                 {hasApplied ? (
-                  <button
-                    disabled
-                    className="bg-green-600 text-white px-4 py-2 rounded cursor-default"
-                  >
+                  <button className="bg-green-600 text-white px-4 py-2 rounded cursor-default">
                     Applied ✓
                   </button>
                 ) : (
@@ -184,21 +186,23 @@ const ApplyJob = () => {
 
             {/* More Jobs from Company */}
             <div className="w-full lg:w-1/3 mt-8 lg:mt-0 lg:ml-8 space-y-5">
-              <h2>More Jobs from {JobData.companyId.name}</h2>
+              <h2>
+                More Jobs from {JobData?.companyId?.name || "This Company"}
+              </h2>
               {jobs
                 .filter(
                   (job) =>
                     job._id !== JobData._id &&
-                    job.companyId._id === JobData.companyId._id
+                    job.companyId?._id === JobData.companyId?._id
                 )
                 .slice(0, 4)
-                .map((job, index) => {
+                .map((job) => {
                   const hasAppliedToThisJob = userApplications.some(
                     (application) => application.jobId._id === job._id
                   );
                   return (
                     <JobCard
-                      key={index}
+                      key={job._id} // Use job._id as the key
                       job={job}
                       hasApplied={hasAppliedToThisJob}
                     />
@@ -210,8 +214,6 @@ const ApplyJob = () => {
       </div>
       <Footer />
     </>
-  ) : (
-    <Loading />
   );
 };
 

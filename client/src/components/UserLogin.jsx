@@ -4,6 +4,7 @@ import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 
 const UserLogin = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const UserLogin = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
 
   const { setShowUserLogin, backendUrl, setToken, setUserData } =
     useContext(AppContext);
@@ -73,10 +75,6 @@ const UserLogin = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
-
     // For Sign Up: first submit text data, then ask for image upload
     if (formType === "Sign Up" && !isTextDataSubmitted) {
       setIsTextDataSubmitted(true);
@@ -116,7 +114,7 @@ const UserLogin = () => {
 
         if (data.success) {
           handleAuthSuccess(data);
-          navigate("/login");
+          navigate("/");
         } else {
           toast.error(data.message);
         }
@@ -140,6 +138,11 @@ const UserLogin = () => {
     setFormData({ name: "", email: "", password: "" });
     setImage(null);
   }, []);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   return (
     <div className="fixed inset-0 z-50 backdrop-blur-sm bg-black/40 flex justify-center items-center">
@@ -247,9 +250,9 @@ const UserLogin = () => {
               )}
             </div>
 
-            {/* Password field */}
+            {/* Password field with Eye icon for toggle */}
             <div>
-              <div className="border border-gray-300 px-4 py-3 flex items-center gap-3 rounded-lg focus-within:border-blue-500 transition-colors">
+              <div className="border border-gray-300 px-4 py-3 flex items-center gap-3 rounded-lg focus-within:border-blue-500 transition-colors relative">
                 <img
                   src={assets.lock_icon}
                   alt="Password Icon"
@@ -261,11 +264,22 @@ const UserLogin = () => {
                   onChange={(e) =>
                     handleInputChange("password", e.target.value)
                   }
-                  type="password"
+                  type={showPassword ? "text" : "password"} // Toggle input type
                   placeholder="Password"
                   disabled={isLoading}
                   required
                 />
+                {/* Eye icon for password visibility toggle */}
+                <span
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <Eye className="w-5 h-5 text-gray-600" />
+                  )}
+                </span>
               </div>
               {errors.password && (
                 <p className="text-red-500 text-xs mt-1">{errors.password}</p>

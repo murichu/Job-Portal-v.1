@@ -5,17 +5,18 @@ import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { setShowRecruiterLogin, setShowUserLogin, userData, logout,} =
-    useContext(AppContext);
+  const {
+    setShowRecruiterLogin,
+    setShowUserLogin,
+    userData,
+    companyData,
+    logout,
+  } = useContext(AppContext);
 
   const handleLogout = () => {
     logout();
     navigate("/");
-    
   };
-
-  //<Link to="/applications" className="hover:underline">Applied Jobs</Link>
-          // <span className="hidden sm:inline-block">|</span>
 
   return (
     <div className="shadow py-4">
@@ -27,13 +28,13 @@ const Navbar = () => {
           className="cursor-pointer hover:opacity-80 transition-opacity"
         />
 
+        {/* If user is logged in */}
         {userData ? (
           <div className="flex items-center gap-4 text-gray-700">
-            
             <div className="flex items-center gap-2">
-              <img 
-                src={userData.image} 
-                alt="Profile" 
+              <img
+                src={userData.image}
+                alt="Profile"
                 className="w-8 h-8 rounded-full object-cover"
                 onError={(e) => {
                   e.target.src = assets.profile_img;
@@ -47,13 +48,48 @@ const Navbar = () => {
                   ⋮
                 </button>
                 <div className="absolute right-0 top-8 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[120px] z-10">
-                  <Link 
-                    to="/applications" 
+                  <Link
+                    to="/applications"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     My Applications
                   </Link>
-                  <button 
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : companyData ? (
+          // If company is logged in
+          <div className="flex items-center gap-4 text-gray-700">
+            <div className="flex items-center gap-2">
+              <img
+                src={companyData.logo || assets.profile_img}
+                alt="Company Logo"
+                className="w-8 h-8 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.src = assets.profile_img;
+                }}
+              />
+              <div className="max-sm:hidden">
+                <p className="text-sm font-medium">
+                  Welcome, {companyData.name}
+                </p>
+              </div>
+              <div className="relative group">
+                <div className="absolute right-0 top-8 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[120px] z-10">
+                  <Link
+                    to="/company-dashboard"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
@@ -64,6 +100,7 @@ const Navbar = () => {
             </div>
           </div>
         ) : (
+          // If neither user nor company is logged in
           <div className="flex gap-4 max-sm:text-xs">
             <button
               onClick={() => setShowRecruiterLogin(true)}

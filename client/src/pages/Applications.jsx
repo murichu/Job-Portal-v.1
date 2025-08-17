@@ -133,40 +133,46 @@ const Applications = () => {
           </thead>
           <tbody>
             {userApplications && userApplications.length > 0 ? (
-              userApplications.map((application, index) => (
-                <tr key={index}>
-                  <td className="py-3 px-4 flex items-center gap-2 border-b">
-                    <img
-                      className="w-8 h-8"
-                      src={application.companyId.image}
-                      alt=""
-                    />
-                    {application.companyId.name}
-                  </td>
-                  <td className="py-2 px-4 border-b">
-                    {application.jobId.title}
-                  </td>
-                  <td className="py-2 px-4 border-b max-sm:hidden">
-                    {application.jobId.location}
-                  </td>
-                  <td className="py-2 px-4 border-b max-sm:hidden">
-                    {moment(application.date).format("ll")}
-                  </td>
-                  <td className="py-2 px-4 border-b">
-                    <span
-                      className={`${
-                        application.status === "Accepted"
-                          ? "bg-green-100"
-                          : application.status === "Rejected"
-                          ? "bg-red-100"
-                          : "bg-blue-100"
-                      } px-4 py-1.5 rounded`}
-                    >
-                      {application.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              userApplications.map((application, index) => {
+                const company = application.companyId || {};
+                const job = application.jobId || {};
+
+                return (
+                  <tr key={index}>
+                    <td className="py-3 px-4 flex items-center gap-2 border-b">
+                      {/* Safe check for image and name */}
+                      <img
+                        className="w-8 h-8"
+                        src={company.image || assets.defaultCompanyImage} // Default image path
+                        alt={company.name || "Unknown Company"} // Fallback name
+                      />
+                      {company.name || "Unknown Company"} {/* Fallback name */}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {job.title || "No title available"}
+                    </td>
+                    <td className="py-2 px-4 border-b max-sm:hidden">
+                      {job.location || "Location not provided"}
+                    </td>
+                    <td className="py-2 px-4 border-b max-sm:hidden">
+                      {moment(application.date).format("ll")}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      <span
+                        className={`${
+                          application.status === "Accepted"
+                            ? "bg-green-100"
+                            : application.status === "Rejected"
+                            ? "bg-red-100"
+                            : "bg-blue-100"
+                        } px-4 py-1.5 rounded`}
+                      >
+                        {application.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="5" className="py-8 text-center text-gray-500">
