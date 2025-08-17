@@ -2,11 +2,15 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Detect environment (serverless vs local)
+// AWS Lambda & Vercel usually only allow writes to /tmp
+const isServerless = process.env.AWS_EXECUTION_ENV || process.env.VERCEL;
+
+const uploadsDir = isServerless
+  ? path.join("/tmp", "uploads")
+  : path.resolve("uploads");
+
 // Ensure the uploads directory exists
-//const uploadsDir = "uploads/";
-
-const uploadsDir = path.resolve("uploads");
-
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -20,7 +24,7 @@ const storage = multer.diskStorage({
     const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
     const filePath = path.join(uploadsDir, safeName);
 
-    // Check if file with same name already exists
+    // Prevent overwriting existing files
     if (fs.existsSync(filePath)) {
       return cb(new Error("A file with this name already exists."), null);
     }
